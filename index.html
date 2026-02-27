@@ -556,6 +556,15 @@
   }
 
   // --- ヘルパー関数 ---
+  // 【追加】抽出・追加・削除で使われている、選択中のファイルを取得する関数
+  function getSelectedSingleFile(inputId) {
+    const inputEl = document.getElementById(inputId);
+    if (inputEl && inputEl.files.length > 0) {
+      return inputEl.files[0];
+    }
+    return null;
+  }
+
   function showToast(msg, isError = false) {
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
