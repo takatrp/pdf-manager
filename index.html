@@ -21,7 +21,7 @@
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",Segoe UI,Roboto,Arial,sans-serif;
     background:var(--bg);
     color:var(--ink);
-    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
   }
   .wrap{
     padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
@@ -84,12 +84,6 @@
     border:1px solid #d9eaed;
     border-radius:12px;
     background:#fff;
-    cursor:grab;
-  }
-  .merge-item:active { cursor:grabbing; }
-  .merge-item.dragging {
-    opacity:.45;
-    border-style:dashed;
   }
   .thumb-wrap {
     width:88px;
@@ -151,7 +145,7 @@
   }
   .thumb-modal.show { display:flex; }
   .thumb-modal-card {
-    width:min(90vw,500px);
+    width:min(96vw,920px);
     border-radius:12px;
     background:#fff;
     padding:14px;
@@ -188,6 +182,11 @@
     align-items:center;
     gap:8px;
   }
+  .merge-move {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
   .mini-btn {
     border:1px solid #ccdce0;
     border-radius:10px;
@@ -198,11 +197,15 @@
     padding:6px 8px;
     cursor:pointer;
   }
-  .drag-handle {
-    color:#6a8790;
-    font-weight:900;
-    font-size:18px;
-    user-select:none;
+  .mini-btn.move-btn {
+    min-width:34px;
+    padding:4px 8px;
+    font-size:14px;
+    line-height:1;
+  }
+  .mini-btn:disabled {
+    opacity:.45;
+    cursor:not-allowed;
   }
   .merge-empty {
     margin-top:10px;
@@ -251,7 +254,7 @@
   .action-status.error{color:#e74c3c; font-weight:700;}
 
   /* footer */
-  .mk-mini{ margin:24px 4px 6px; text-align:center;color:#667; font-size:11px;line-height:1.6; }
+  .mk-mini{ margin:24px 4px calc(96px + env(safe-area-inset-bottom)); text-align:center;color:#667; font-size:11px;line-height:1.6; }
   .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
   .mk-rev{display:block; margin-top:4px; font-weight:700; color:#4f6570;}
 
@@ -263,6 +266,20 @@
   .mk-nav .btns{display:flex; gap:8px; flex:0 0 auto;}
   .mk-nav a{display:inline-flex; align-items:center; justify-content:center; height:36px; padding:0 12px; border-radius:12px; border:1px solid var(--mk-line); text-decoration:none; font-weight:800; color:var(--mk-ink); background:#fff;}
   .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
+
+  @media (min-width: 960px) {
+    .mk-nav {
+      position: static;
+      backdrop-filter: none;
+      background:#fff;
+    }
+    body {
+      padding-bottom: 0;
+    }
+    .mk-mini {
+      margin-bottom: 12px;
+    }
+  }
 </style>
 </head>
 <body>
@@ -368,7 +385,7 @@
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
-    <span class="mk-rev">安心pdfマネージャー rev. r6</span>
+    <span class="mk-rev">安心pdfマネージャー rev. r8</span>
   </footer>
 </div>
 
@@ -592,8 +609,6 @@
     mergeFilesState.forEach((item, index) => {
       const row = document.createElement('div');
       row.className = 'merge-item';
-      row.draggable = true;
-      row.dataset.index = index;
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'thumb-wrap';
@@ -638,14 +653,30 @@
         renderMergeList();
       });
 
-      const handle = document.createElement('span');
-      handle.className = 'drag-handle';
-      handle.textContent = '⋮⋮';
-      handle.title = 'ドラッグして並び替え';
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveMergeItem(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === mergeFilesState.length - 1;
+      moveDownBtn.addEventListener('click', () => moveMergeItem(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
 
       if (item.expanded) name.classList.add('expanded');
 
-      actions.append(toggleBtn, removeBtn, handle);
+      actions.append(toggleBtn, removeBtn, moveWrap);
       row.append(thumbWrap, meta, actions);
       mergeListEl.appendChild(row);
       renderPdfThumbnail(item.file, canvas);
@@ -683,34 +714,13 @@
     addFilesToMergeState(e.dataTransfer.files);
   });
 
-  mergeListEl.addEventListener('dragstart', (e) => {
-    const row = e.target.closest('.merge-item');
-    if (!row) return;
-    row.classList.add('dragging');
-    e.dataTransfer.setData('text/plain', row.dataset.index);
-  });
-
-  mergeListEl.addEventListener('dragend', (e) => {
-    const row = e.target.closest('.merge-item');
-    if (row) row.classList.remove('dragging');
-  });
-
-  mergeListEl.addEventListener('dragover', (e) => {
-    e.preventDefault();
-  });
-
-  mergeListEl.addEventListener('drop', (e) => {
-    e.preventDefault();
-    const target = e.target.closest('.merge-item');
-    if (!target) return;
-    const draggingIndex = Number(e.dataTransfer.getData('text/plain'));
-    const targetIndex = Number(target.dataset.index);
-    if (Number.isNaN(draggingIndex) || Number.isNaN(targetIndex) || draggingIndex === targetIndex) return;
-
-    const [moved] = mergeFilesState.splice(draggingIndex, 1);
+  function moveMergeItem(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= mergeFilesState.length) return;
+    const [moved] = mergeFilesState.splice(index, 1);
     mergeFilesState.splice(targetIndex, 0, moved);
     renderMergeList();
-  });
+  }
 
   thumbModalEl.addEventListener('click', () => {
     thumbModalEl.classList.remove('show');
