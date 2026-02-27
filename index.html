@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>セキュアPDFツール｜松本会計事務所</title>
+<title>安心pdfマネージャー｜松本会計事務所</title>
 
 <meta name="theme-color" content="#578899" />
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
@@ -64,6 +64,96 @@
   .file-box:hover { background: #eef7f8; border-color: #578899; }
   .file-box input[type="file"] {
     width: 100%; font-size: 14px; color: var(--ink); cursor: pointer;
+  }
+  .file-box.dragover {
+    background:#e9f4f7;
+    border-color:#3e6f80;
+  }
+  .drop-hint {
+    font-size:12px;
+    color:#4f6570;
+    margin-top:8px;
+  }
+  .merge-list {
+    margin-top:12px;
+    display:grid;
+    gap:10px;
+  }
+  .merge-item {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+    cursor:grab;
+  }
+  .merge-item:active { cursor:grabbing; }
+  .merge-item.dragging {
+    opacity:.45;
+    border-style:dashed;
+  }
+  .thumb-wrap {
+    width:88px;
+    height:120px;
+    border-radius:8px;
+    border:1px solid #ccdce0;
+    overflow:hidden;
+    background:#f3f8fa;
+    flex:0 0 auto;
+    display:grid;
+    place-items:center;
+  }
+  .thumb-wrap canvas {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .merge-meta { min-width:0; flex:1; }
+  .merge-name {
+    margin:0;
+    font-size:13px;
+    line-height:1.35;
+    color:#263a40;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .merge-name.expanded {
+    white-space:normal;
+    word-break:break-all;
+  }
+  .merge-order {
+    margin:4px 0 0;
+    font-size:11px;
+    color:#66808a;
+  }
+  .merge-actions {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .mini-btn {
+    border:1px solid #ccdce0;
+    border-radius:10px;
+    background:#fff;
+    color:#35535d;
+    font-size:11px;
+    font-weight:700;
+    padding:6px 8px;
+    cursor:pointer;
+  }
+  .drag-handle {
+    color:#6a8790;
+    font-weight:900;
+    font-size:18px;
+    user-select:none;
+  }
+  .merge-empty {
+    margin-top:10px;
+    font-size:12px;
+    color:#6a7a7d;
   }
   
   .input-text, .input-num {
@@ -129,7 +219,7 @@
       <a class="logo-link" href="https://takatrp.github.io/tool-portal/" target="_blank" rel="noopener">
         <img src="ロゴ.jpg" alt="松本会計事務所ロゴ" class="logo" onerror="this.style.display='none'" />
       </a>
-      <h1 class="title">セキュアPDFツール</h1>
+      <h1 class="title">安心pdfマネージャー</h1>
     </div>
     <div class="subtitle">
       顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
@@ -154,9 +244,12 @@
     <div class="field">
       <div class="label big">📑 2. 結合 (Merge)</div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
-      <div class="file-box">
+      <div class="file-box" id="merge-dropzone">
         <input type="file" id="merge-files" accept="application/pdf" multiple>
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="merge-empty" id="merge-empty">ファイルを2つ以上追加すると結合できます。</div>
+      <div class="merge-list" id="merge-list" aria-live="polite"></div>
     </div>
     <button class="btn" onclick="handleMerge()">結合して保存</button>
   </section>
@@ -243,7 +336,24 @@
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
 
   const { PDFDocument } = PDFLib;
+  const mergeFilesState = [];
+  const mergeInput = document.getElementById('merge-files');
+  const mergeDropzone = document.getElementById('merge-dropzone');
+  const mergeListEl = document.getElementById('merge-list');
+  const mergeEmptyEl = document.getElementById('merge-empty');
   const sysToastEl = document.getElementById('sysToast');
+
+  let pdfjsLibPromise;
+
+  async function getPdfJsLib() {
+    if (!pdfjsLibPromise) {
+      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+    }
+    return pdfjsLibPromise;
+  }
 
   // --- ヘルパー関数 ---
   function showToast(msg, isError = false) {
@@ -277,6 +387,157 @@
     showToast('処理が完了し、ダウンロードを開始しました。');
   }
 
+  async function renderPdfThumbnail(file, canvas) {
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(88 / viewport.width, 120 / viewport.height);
+      const scaledViewport = page.getViewport({ scale });
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+    } catch (err) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = 88;
+      canvas.height = 120;
+      ctx.fillStyle = '#eff5f7';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#577783';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
+    }
+  }
+
+  function syncMergeVisibility() {
+    mergeEmptyEl.style.display = mergeFilesState.length ? 'none' : 'block';
+  }
+
+  function renderMergeList() {
+    mergeListEl.innerHTML = '';
+    mergeFilesState.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'merge-item';
+      row.draggable = true;
+      row.dataset.index = index;
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap';
+      const canvas = document.createElement('canvas');
+      thumbWrap.appendChild(canvas);
+
+      const meta = document.createElement('div');
+      meta.className = 'merge-meta';
+      const name = document.createElement('p');
+      name.className = 'merge-name';
+      name.textContent = item.file.name;
+      name.title = item.file.name;
+      const order = document.createElement('p');
+      order.className = 'merge-order';
+      order.textContent = `${index + 1}番目に結合されます`;
+
+      meta.append(name, order);
+
+      const actions = document.createElement('div');
+      actions.className = 'merge-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'mini-btn';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全文';
+      toggleBtn.type = 'button';
+      toggleBtn.addEventListener('click', () => {
+        item.expanded = !item.expanded;
+        renderMergeList();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'mini-btn';
+      removeBtn.textContent = '削除';
+      removeBtn.type = 'button';
+      removeBtn.addEventListener('click', () => {
+        mergeFilesState.splice(index, 1);
+        renderMergeList();
+      });
+
+      const handle = document.createElement('span');
+      handle.className = 'drag-handle';
+      handle.textContent = '⋮⋮';
+      handle.title = 'ドラッグして並び替え';
+
+      if (item.expanded) name.classList.add('expanded');
+
+      actions.append(toggleBtn, removeBtn, handle);
+      row.append(thumbWrap, meta, actions);
+      mergeListEl.appendChild(row);
+      renderPdfThumbnail(item.file, canvas);
+    });
+
+    syncMergeVisibility();
+  }
+
+  function addFilesToMergeState(fileList) {
+    const files = Array.from(fileList).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+    files.forEach((file) => {
+      mergeFilesState.push({ file, expanded: false });
+    });
+    renderMergeList();
+  }
+
+  mergeInput.addEventListener('change', (e) => {
+    addFilesToMergeState(e.target.files);
+    mergeInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    mergeDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      mergeDropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    mergeDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      mergeDropzone.classList.remove('dragover');
+    });
+  });
+  mergeDropzone.addEventListener('drop', (e) => {
+    addFilesToMergeState(e.dataTransfer.files);
+  });
+
+  mergeListEl.addEventListener('dragstart', (e) => {
+    const row = e.target.closest('.merge-item');
+    if (!row) return;
+    row.classList.add('dragging');
+    e.dataTransfer.setData('text/plain', row.dataset.index);
+  });
+
+  mergeListEl.addEventListener('dragend', (e) => {
+    const row = e.target.closest('.merge-item');
+    if (row) row.classList.remove('dragging');
+  });
+
+  mergeListEl.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  mergeListEl.addEventListener('drop', (e) => {
+    e.preventDefault();
+    const target = e.target.closest('.merge-item');
+    if (!target) return;
+    const draggingIndex = Number(e.dataTransfer.getData('text/plain'));
+    const targetIndex = Number(target.dataset.index);
+    if (Number.isNaN(draggingIndex) || Number.isNaN(targetIndex) || draggingIndex === targetIndex) return;
+
+    const [moved] = mergeFilesState.splice(draggingIndex, 1);
+    mergeFilesState.splice(targetIndex, 0, moved);
+    renderMergeList();
+  });
+
   // --- 1. パスワード解除 ---
   async function handleUnlock() {
     const file = document.getElementById('unlock-file').files[0];
@@ -303,13 +564,12 @@
 
   // --- 2. 結合 ---
   async function handleMerge() {
-    const files = document.getElementById('merge-files').files;
-    if (files.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
+    if (mergeFilesState.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
     
     showToast('処理中...');
     try {
       const mergedPdf = await PDFDocument.create();
-      for (let file of files) {
+      for (let { file } of mergeFilesState) {
         const bytes = await readFileAsArrayBuffer(file);
         const pdf = await PDFDocument.load(bytes);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
