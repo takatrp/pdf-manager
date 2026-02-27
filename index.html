@@ -6,6 +6,7 @@
 <title>安心pdfマネージャー｜松本会計事務所</title>
 
 <meta name="theme-color" content="#578899" />
+<link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
@@ -305,19 +306,35 @@
   .action-status.error{color:#e74c3c; font-weight:700;}
   .feature-home {
     display:grid;
-    gap:10px;
+    gap:12px;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
   }
   .feature-link-btn {
     width:100%;
-    text-align:left;
+    min-height:120px;
+    text-align:center;
     border:1px solid #d9eaed;
-    border-radius:12px;
+    border-radius:16px;
     background:#fff;
     color:#27424a;
     padding:14px 12px;
     font-size:16px;
     font-weight:800;
     cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:0 8px 20px rgba(35,80,90,.08);
+  }
+  .feature-link-btn .feature-icon {
+    font-size:30px;
+    line-height:1;
+  }
+  .feature-link-btn .feature-text {
+    font-size:15px;
+    line-height:1.35;
   }
   .feature-back {
     margin:8px 0 2px;
@@ -338,7 +355,16 @@
   .feature-panel.active { display:block; }
 
   /* footer */
-  .mk-mini{ margin:24px 4px calc(96px + env(safe-area-inset-bottom)); text-align:center;color:#667; font-size:11px;line-height:1.6; }
+  .mk-mini{
+    margin:14px 0 calc(96px + env(safe-area-inset-bottom));
+    font-size:12px;
+    color:#334155;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    flex-wrap:wrap;
+    text-align:center;
+  }
   .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
   .mk-rev{display:block; margin-top:4px; font-weight:700; color:#4f6570;}
 
@@ -362,6 +388,12 @@
     }
     .mk-mini {
       margin-bottom: 12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .feature-home {
+      grid-template-columns:1fr;
     }
   }
 </style>
@@ -391,10 +423,10 @@
   <section class="card feature-panel active" id="feature-home">
     <div class="label big">使いたい機能を選択してください</div>
     <div class="feature-home">
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')">📑 1. 結合 (Merge)</button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')">✂️ 2. 分解・抽出 (Extract)</button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')">➕ 3. ページ追加 (Insert)</button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')">🗑️ 4. ページ削除 (Delete)</button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
     </div>
   </section>
 
@@ -481,8 +513,10 @@
 
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
-    <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
-    <span class="mk-rev">安心pdfマネージャー rev. r10</span>
+    <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
+    ｜ <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>
+    ｜ <a href="/tool-portal/terms.html" target="_blank" rel="noopener">利用条件</a>
+    ｜ <span id="build-rev">r11</span>（<span id="last-updated-date"></span>）
   </footer>
 </div>
 
@@ -506,8 +540,15 @@
 </div>
 
 <script>
-  // 年度自動更新
+  // 年度・rev・最終更新日を自動更新
+  const VERSION = 'r11';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
+  const d = new Date(document.lastModified);
+  const yyyy = String(d.getFullYear());
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  document.getElementById('last-updated-date').textContent = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('build-rev').textContent = VERSION;
 
   const { PDFDocument } = PDFLib;
   const mergeFilesState = [];
