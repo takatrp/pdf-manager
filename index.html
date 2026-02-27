@@ -404,13 +404,18 @@
   const sysToastEl = document.getElementById('sysToast');
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
-  const actionStatusEl = document.getElementById('action-status');
-  const singleFileState = {
-    'extract-file': null,
-    'insert-base-file': null,
-    'insert-add-file': null,
-    'delete-file': null,
-  };
+
+  let pdfjsLibPromise;
+
+  async function getPdfJsLib() {
+    if (!pdfjsLibPromise) {
+      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+    }
+    return pdfjsLibPromise;
+  }
 
   let pdfjsLibPromise;
 
@@ -459,17 +464,9 @@
   }
 
   function setSingleFileToInput(inputEl, file) {
-    try {
-      const dt = new DataTransfer();
-      dt.items.add(file);
-      inputEl.files = dt.files;
-    } catch (_) {
-      // Safari など DataTransfer の直接生成に未対応の環境では状態管理のみで処理する
-    }
-  }
-
-  function getSelectedSingleFile(inputId) {
-    return singleFileState[inputId] || document.getElementById(inputId).files[0] || null;
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    inputEl.files = dt.files;
   }
 
   function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText }) {
@@ -479,7 +476,7 @@
     if (!inputEl || !dropzoneEl || !previewEl) return;
 
     const renderSinglePreview = async () => {
-      const file = getSelectedSingleFile(inputId);
+      const file = inputEl.files[0];
       if (!file) {
         previewEl.classList.remove('show');
         previewEl.innerHTML = '';
@@ -512,10 +509,7 @@
       await renderPdfThumbnail(file, canvas);
     };
 
-    inputEl.addEventListener('change', () => {
-      singleFileState[inputId] = inputEl.files[0] || null;
-      renderSinglePreview();
-    });
+    inputEl.addEventListener('change', renderSinglePreview);
     ['dragenter', 'dragover'].forEach((eventName) => {
       dropzoneEl.addEventListener(eventName, (e) => {
         e.preventDefault();
@@ -531,28 +525,12 @@
     dropzoneEl.addEventListener('drop', (e) => {
       const files = Array.from(e.dataTransfer.files).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
       if (!files.length) return;
-      singleFileState[inputId] = files[0];
       setSingleFileToInput(inputEl, files[0]);
       renderSinglePreview();
     });
   }
 
   async function renderPdfThumbnail(file, canvas) {
-    const drawFallback = () => {
-      const ctx = canvas.getContext('2d');
-      canvas.width = 88;
-      canvas.height = 120;
-      ctx.fillStyle = '#eff5f7';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#577783';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
-    };
-
-    // 先にプレースホルダーを描画して、読み込み失敗時でもサムネイル領域が空にならないようにする
-    drawFallback();
-
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
@@ -567,7 +545,15 @@
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
     } catch (err) {
-      drawFallback();
+      const ctx = canvas.getContext('2d');
+      canvas.width = 88;
+      canvas.height = 120;
+      ctx.fillStyle = '#eff5f7';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#577783';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
     }
   }
 
@@ -702,14 +688,6 @@
 
   thumbModalEl.addEventListener('click', () => {
     thumbModalEl.classList.remove('show');
-  });
-
-  window.addEventListener('error', (event) => {
-    showToast(`エラー: ${event.message}`, true);
-  });
-
-  window.addEventListener('unhandledrejection', (event) => {
-    showToast(`エラー: ${event.reason?.message || '処理に失敗しました。'}`, true);
   });
 
   bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル' });
