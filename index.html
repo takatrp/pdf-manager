@@ -247,6 +247,8 @@
     max-width:min(92vw,560px); white-space:nowrap;
   }
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
+  .action-status.error{color:#e74c3c; font-weight:700;}
 
   /* footer */
   .mk-mini{ margin:24px 4px 6px; text-align:center;color:#667; font-size:11px;line-height:1.6; }
@@ -278,6 +280,7 @@
       顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
     </div>
   </header>
+  <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
 
 
   <section class="card">
@@ -429,6 +432,8 @@
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
     sysToastEl.style.borderColor = isError ? '#e74c3c' : 'rgba(87,136,153,.35)';
+    actionStatusEl.textContent = msg;
+    actionStatusEl.classList.toggle('error', isError);
     sysToastEl.classList.add('show');
     clearTimeout(showToast._timer);
     showToast._timer = setTimeout(() => {
