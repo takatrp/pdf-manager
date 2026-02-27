@@ -374,6 +374,7 @@
     text-align:center;
   }
   .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .mk-rev{display:block; margin-top:4px; font-weight:700; color:#4f6570;}
 
   /* sticky nav */
   .mk-nav{position:fixed; left:0; right:0; bottom:0; z-index:999; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.92); border-top:1px solid var(--mk-line); backdrop-filter:saturate(180%) blur(10px);}
@@ -608,6 +609,15 @@
   }
 
   // --- ヘルパー関数 ---
+  // 【追加】抽出・追加・削除で使われている、選択中のファイルを取得する関数
+  function getSelectedSingleFile(inputId) {
+    const inputEl = document.getElementById(inputId);
+    if (inputEl && inputEl.files.length > 0) {
+      return inputEl.files[0];
+    }
+    return null;
+  }
+
   function showToast(msg, isError = false) {
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
