@@ -117,6 +117,37 @@
     background:#fff;
   }
   .single-preview.show { display:flex; }
+  .single-preview.multi-pages {
+    display:block;
+  }
+  .single-preview-header {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .single-pages-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
+    gap:10px;
+  }
+  .single-page-item {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .single-page-item .thumb-wrap {
+    width:100%;
+    max-width:110px;
+    aspect-ratio: 11 / 15;
+    height:auto;
+  }
+  .single-page-number {
+    margin:0;
+    font-size:11px;
+    color:#66808a;
+  }
   .single-meta { min-width:0; }
   .single-name {
     margin:0;
@@ -385,7 +416,7 @@
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
-    <span class="mk-rev">安心pdfマネージャー rev. r8</span>
+    <span class="mk-rev">安心pdfマネージャー rev. r9</span>
   </footer>
 </div>
 
@@ -498,7 +529,7 @@
     return singleFileState[inputId] || document.getElementById(inputId).files[0] || null;
   }
 
-  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText }) {
+  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText, showAllPages = false }) {
     const inputEl = document.getElementById(inputId);
     const dropzoneEl = document.getElementById(dropzoneId);
     const previewEl = document.getElementById(previewId);
@@ -507,11 +538,12 @@
     const renderSinglePreview = async () => {
       const file = getSelectedSingleFile(inputId);
       if (!file) {
-        previewEl.classList.remove('show');
+        previewEl.classList.remove('show', 'multi-pages');
         previewEl.innerHTML = '';
         return;
       }
       previewEl.classList.add('show');
+      previewEl.classList.toggle('multi-pages', showAllPages);
       previewEl.innerHTML = '';
 
       const thumbWrap = document.createElement('div');
@@ -534,8 +566,22 @@
       note.textContent = noteText;
       meta.append(name, note);
 
-      previewEl.append(thumbWrap, meta);
+      if (!showAllPages) {
+        previewEl.append(thumbWrap, meta);
+        await renderPdfThumbnail(file, canvas);
+        return;
+      }
+
+      const header = document.createElement('div');
+      header.className = 'single-preview-header';
+      header.append(thumbWrap, meta);
+      previewEl.appendChild(header);
       await renderPdfThumbnail(file, canvas);
+
+      const pagesGrid = document.createElement('div');
+      pagesGrid.className = 'single-pages-grid';
+      previewEl.appendChild(pagesGrid);
+      await renderAllPdfPages(file, pagesGrid);
     };
 
     inputEl.addEventListener('change', () => {
@@ -598,6 +644,58 @@
     } catch (err) {
       drawFallback();
     }
+  }
+
+
+  async function renderAllPdfPages(file, container) {
+    container.innerHTML = '';
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+        const pageItem = document.createElement('div');
+        pageItem.className = 'single-page-item';
+
+        const pageThumb = document.createElement('div');
+        pageThumb.className = 'thumb-wrap zoomable';
+        const pageCanvas = document.createElement('canvas');
+        pageThumb.appendChild(pageCanvas);
+        pageThumb.addEventListener('click', async () => {
+          await renderPdfPageToCanvas(pdf, pageNum, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+          thumbModalEl.classList.add('show');
+        });
+
+        const pageLabel = document.createElement('p');
+        pageLabel.className = 'single-page-number';
+        pageLabel.textContent = `${pageNum}ページ目`;
+
+        pageItem.append(pageThumb, pageLabel);
+        container.appendChild(pageItem);
+        await renderPdfPageToCanvas(pdf, pageNum, pageCanvas);
+      }
+    } catch (error) {
+      container.innerHTML = '';
+      const note = document.createElement('p');
+      note.className = 'single-note';
+      note.textContent = 'ページプレビューの読み込みに失敗しました。';
+      container.appendChild(note);
+    }
+  }
+
+  async function renderPdfPageToCanvas(pdf, pageNum, canvas, options = {}) {
+    const targetWidth = options.targetWidth || 88;
+    const targetHeight = options.targetHeight || 120;
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(targetWidth / viewport.width, targetHeight / viewport.height);
+    const scaledViewport = page.getViewport({ scale });
+    canvas.width = scaledViewport.width;
+    canvas.height = scaledViewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
   }
 
   function syncMergeVisibility() {
@@ -727,17 +825,20 @@
   });
 
   window.addEventListener('error', (event) => {
-    showToast(`エラー: ${event.message}`, true);
+    const rawMessage = event?.message || '';
+    const message = String(rawMessage).trim();
+    if (!message || message === 'Script error.' || message === 'Script error') return;
+    showToast(`エラー: ${message}`, true);
   });
 
   window.addEventListener('unhandledrejection', (event) => {
     showToast(`エラー: ${event.reason?.message || '処理に失敗しました。'}`, true);
   });
 
-  bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル' });
+  bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル' });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル' });
-  bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル' });
+  bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true });
 
   // --- 1. 結合 ---
   async function handleMerge() {
