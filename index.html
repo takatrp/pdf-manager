@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>安心pdfマネージャー｜松本会計事務所</title>
+<title>セキュアPDFマネージャー｜松本会計事務所</title>
 
 <meta name="theme-color" content="#578899" />
 <link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
@@ -399,20 +399,6 @@
   .mk-nav a{display:inline-flex; align-items:center; justify-content:center; height:36px; padding:0 12px; border-radius:12px; border:1px solid var(--mk-line); text-decoration:none; font-weight:800; color:var(--mk-ink); background:#fff;}
   .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
 
-  @media (min-width: 960px) {
-    .mk-nav {
-      position: static;
-      backdrop-filter: none;
-      background:#fff;
-    }
-    body {
-      padding-bottom: 0;
-    }
-    .mk-mini {
-      margin-bottom: 12px;
-    }
-  }
-
   @media (max-width: 480px) {
     .feature-home {
       grid-template-columns:1fr;
@@ -430,10 +416,10 @@
       <a class="logo-link" href="https://takatrp.github.io/tool-portal/" target="_blank" rel="noopener">
         <img src="ロゴ.jpg" alt="松本会計事務所ロゴ" class="logo" onerror="this.style.display='none'" />
       </a>
-      <h1 class="title">安心pdfマネージャー</h1>
+      <h1 class="title">セキュアPDFマネージャー</h1>
     </div>
     <div class="subtitle">
-      顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
+      機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
     </div>
   </header>
   <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
@@ -538,7 +524,7 @@
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
     ｜ <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>
     ｜ <a href="/tool-portal/terms.html" target="_blank" rel="noopener">利用条件</a>
-    ｜ <span id="build-rev">r13</span>（<span id="last-updated-date"></span>）
+    ｜ <span id="build-rev">r14</span>（<span id="last-updated-date"></span>）
   </footer>
 </div>
 
@@ -563,7 +549,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r13';
+  const VERSION = 'r14';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
