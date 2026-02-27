@@ -151,7 +151,7 @@
   }
   .thumb-modal.show { display:flex; }
   .thumb-modal-card {
-    width:min(96vw,920px);
+    width:min(90vw,500px);
     border-radius:12px;
     background:#fff;
     padding:14px;
@@ -368,7 +368,7 @@
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
-    <span class="mk-rev">安心pdfマネージャー rev. r7</span>
+    <span class="mk-rev">安心pdfマネージャー rev. r6</span>
   </footer>
 </div>
 
@@ -425,6 +425,15 @@
   }
 
   // --- ヘルパー関数 ---
+  // 【追加】抽出・追加・削除で使われている、選択中のファイルを取得する関数
+  function getSelectedSingleFile(inputId) {
+    const inputEl = document.getElementById(inputId);
+    if (inputEl && inputEl.files.length > 0) {
+      return inputEl.files[0];
+    }
+    return null;
+  }
+
   function showToast(msg, isError = false) {
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
