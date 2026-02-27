@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>セキュアPDFツール｜松本会計事務所</title>
+<title>セキュアPDFマネージャー｜松本会計事務所</title>
 
 <meta name="theme-color" content="#578899" />
+<link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
 <style>
@@ -21,7 +22,7 @@
     font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",Segoe UI,Roboto,Arial,sans-serif;
     background:var(--bg);
     color:var(--ink);
-    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+    padding-bottom: calc(140px + env(safe-area-inset-bottom));
   }
   .wrap{
     padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
@@ -47,9 +48,6 @@
     box-shadow:0 10px 30px rgba(35,80,90,.12);
     padding:20px 16px;margin:16px 0;
   }
-  .card.feature-unlock {
-    border: 2px solid #f2b632; /* パスワード解除を目立たせる */
-  }
   .field{margin:0 0 20px}
   .field:last-child { margin-bottom: 0; }
   .label.big{font-size:16px;font-weight:800;color:#324245; margin-bottom: 8px;}
@@ -58,12 +56,247 @@
   /* Inputs (トンマナに合わせたファイル・テキスト入力枠) */
   .file-box {
     background:#f8fcfd; border: 2px dashed #7aa2b0;
-    border-radius:12px; padding:12px;
+    border-radius:12px; padding:16px;
+    min-height:112px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    text-align:center;
     transition: background-color .28s ease, border-color .28s ease;
   }
   .file-box:hover { background: #eef7f8; border-color: #578899; }
   .file-box input[type="file"] {
-    width: 100%; font-size: 14px; color: var(--ink); cursor: pointer;
+    width:min(100%, 360px);
+    font-size:14px;
+    color:var(--ink);
+    cursor:pointer;
+    margin:0 auto;
+  }
+  .file-box.dragover {
+    background:#e9f4f7;
+    border-color:#3e6f80;
+  }
+  .drop-hint {
+    font-size:12px;
+    color:#4f6570;
+    margin-top:0;
+    text-align:center;
+  }
+  .merge-list {
+    margin-top:12px;
+    display:grid;
+    gap:10px;
+  }
+  .merge-item {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:38px 10px 10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+  }
+  .thumb-wrap {
+    width:88px;
+    height:120px;
+    border-radius:8px;
+    border:1px solid #ccdce0;
+    overflow:hidden;
+    background:#f3f8fa;
+    flex:0 0 auto;
+    display:grid;
+    place-items:center;
+  }
+  .thumb-wrap canvas {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .thumb-wrap.zoomable { cursor: zoom-in; }
+  .thumb-wrap.zoomable:hover {
+    transform:scale(1.08);
+    transition:transform .2s ease;
+  }
+  .single-preview {
+    margin-top:10px;
+    display:none;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+  }
+  .single-preview.show { display:flex; }
+  .single-preview.multi-pages {
+    display:block;
+  }
+  .single-preview-header {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .single-pages-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
+    gap:10px;
+  }
+  .single-page-item {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .single-page-item .thumb-wrap {
+    width:100%;
+    max-width:110px;
+    aspect-ratio: 11 / 15;
+    height:auto;
+  }
+  .single-page-number {
+    margin:0;
+    font-size:11px;
+    color:#66808a;
+  }
+  .single-page-actions {
+    display:flex;
+    gap:6px;
+  }
+  .single-page-btn {
+    border:1px solid #ccdce0;
+    border-radius:8px;
+    background:#fff;
+    color:#35535d;
+    font-size:10px;
+    font-weight:800;
+    padding:4px 6px;
+    cursor:pointer;
+  }
+  .single-page-item.selected .thumb-wrap {
+    border:2px solid #578899;
+    box-shadow:0 0 0 2px rgba(87,136,153,.2);
+  }
+  .single-page-item.selected .single-page-number {
+    color:#2d5a67;
+    font-weight:800;
+  }
+  .single-meta { min-width:0; }
+  .single-name {
+    margin:0;
+    font-size:12px;
+    color:#35535d;
+    line-height:1.4;
+    max-width:240px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+  }
+  .single-note {
+    margin:4px 0 0;
+    font-size:11px;
+    color:#6a7a7d;
+  }
+  .thumb-modal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1300;
+    padding:20px;
+  }
+  .thumb-modal.show { display:flex; }
+  .thumb-modal-card {
+    width:min(96vw,920px);
+    border-radius:12px;
+    background:#fff;
+    padding:14px;
+  }
+  .thumb-modal canvas {
+    width:100%;
+    max-height:72vh;
+    object-fit:contain;
+    border:1px solid #d9eaed;
+    border-radius:8px;
+    background:#f3f8fa;
+  }
+  .merge-meta { min-width:0; flex:1; overflow:hidden; }
+  .merge-name {
+    margin:0;
+    display:block;
+    max-width:100%;
+    font-size:13px;
+    line-height:1.35;
+    color:#263a40;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .merge-fullname {
+    margin:8px 0 0;
+    padding:8px;
+    border-radius:8px;
+    background:#f6fbfc;
+    color:#27424a;
+    font-size:12px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+  }
+  .merge-name.expanded {
+    white-space:normal;
+    word-break:break-all;
+  }
+  .merge-order-badge {
+    position:absolute;
+    left:10px;
+    top:10px;
+    margin:0;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#e9f4f7;
+    color:#2d5a67;
+    font-size:13px;
+    font-weight:900;
+  }
+  .merge-actions {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .merge-move {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .mini-btn {
+    border:1px solid #ccdce0;
+    border-radius:10px;
+    background:#fff;
+    color:#35535d;
+    font-size:11px;
+    font-weight:700;
+    padding:6px 8px;
+    cursor:pointer;
+  }
+  .mini-btn.move-btn {
+    min-width:34px;
+    padding:4px 8px;
+    font-size:14px;
+    line-height:1;
+  }
+  .mini-btn:disabled {
+    opacity:.45;
+    cursor:not-allowed;
+  }
+  .merge-empty {
+    margin-top:10px;
+    font-size:12px;
+    color:#6a7a7d;
   }
   
   .input-text, .input-num {
@@ -91,11 +324,10 @@
     margin-top: 4px;
   }
   .btn:active{transform:translateY(1px)}
-  .btn.warn{ background: linear-gradient(180deg, #f5d061, #f2b632); color: #925f00; text-shadow: 0 1px 0 rgba(255,255,255,0.4);}
 
   /* Toast notification */
   .sys-toast{
-    position:fixed; left:50%; top:74px; transform:translateX(-50%) translateY(-8px);
+    position:fixed; left:50%; bottom:calc(80px + env(safe-area-inset-bottom)); top:auto; transform:translateX(-50%) translateY(8px);
     z-index:1200; padding:12px 20px; border-radius:999px;
     border:1px solid rgba(87,136,153,.35); background:#fff;
     box-shadow:0 12px 30px rgba(20,40,50,.12); font-size:14px; font-weight:900;
@@ -104,9 +336,73 @@
     max-width:min(92vw,560px); white-space:nowrap;
   }
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+  .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
+  .action-status.error{color:#e74c3c; font-weight:700;}
+  .feature-home {
+    display:grid;
+    gap:12px;
+    grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+  .feature-link-btn {
+    width:100%;
+    min-height:120px;
+    text-align:center;
+    border:1px solid #d9eaed;
+    border-radius:16px;
+    background:#fff;
+    color:#27424a;
+    padding:14px 12px;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    box-shadow:0 8px 20px rgba(35,80,90,.08);
+  }
+  .feature-link-btn .feature-icon {
+    font-size:30px;
+    line-height:1;
+  }
+  .feature-link-btn .feature-text {
+    font-size:15px;
+    line-height:1.35;
+  }
+  .feature-back {
+    margin:8px 0 2px;
+    display:none;
+  }
+  .feature-back.show { display:block; }
+  .feature-back-btn {
+    border:1px solid #ccdce0;
+    border-radius:999px;
+    background:#fff;
+    color:#35535d;
+    font-weight:800;
+    font-size:12px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  .feature-back-inline {
+    margin-top:10px;
+    text-align:left;
+  }
+  .feature-panel { display:none; }
+  .feature-panel.active { display:block; }
 
   /* footer */
-  .mk-mini{ margin:24px 4px 6px; text-align:center;color:#667; font-size:11px;line-height:1.6; }
+  .mk-mini{
+    margin:14px 0 calc(96px + env(safe-area-inset-bottom));
+    font-size:12px;
+    color:#334155;
+    display:flex;
+    justify-content:center;
+    gap:6px;
+    flex-wrap:wrap;
+    text-align:center;
+  }
   .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
 
   /* sticky nav */
@@ -117,6 +413,12 @@
   .mk-nav .btns{display:flex; gap:8px; flex:0 0 auto;}
   .mk-nav a{display:inline-flex; align-items:center; justify-content:center; height:36px; padding:0 12px; border-radius:12px; border:1px solid var(--mk-line); text-decoration:none; font-weight:800; color:var(--mk-ink); background:#fff;}
   .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
+
+  @media (max-width: 480px) {
+    .feature-home {
+      grid-template-columns:1fr;
+    }
+  }
 </style>
 </head>
 <body>
@@ -129,45 +431,52 @@
       <a class="logo-link" href="https://takatrp.github.io/tool-portal/" target="_blank" rel="noopener">
         <img src="ロゴ.jpg" alt="松本会計事務所ロゴ" class="logo" onerror="this.style.display='none'" />
       </a>
-      <h1 class="title">セキュアPDFツール</h1>
+      <h1 class="title">セキュアPDFマネージャー</h1>
     </div>
     <div class="subtitle">
-      顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
+      機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
     </div>
   </header>
+  <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
 
-  <section class="card feature-unlock">
-    <div class="field">
-      <div class="label big">🔓 1. パスワード解除</div>
-      <div class="helper">※保護されたPDFを編集したい場合は、まずここで解除してください。</div>
-      <div class="file-box">
-        <input type="file" id="unlock-file" accept="application/pdf">
-      </div>
+  <div class="feature-back" id="feature-back">
+    <button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button>
+  </div>
+
+  <section class="card feature-panel active" id="feature-home">
+    <div class="label big">使いたい機能を選択してください</div>
+    <div class="feature-home">
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
     </div>
-    <div class="field">
-      <input type="password" id="unlock-password" class="input-text" placeholder="設定されているパスワードを入力">
-    </div>
-    <button class="btn warn" onclick="handleUnlock()">保護を解除して保存</button>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="merge">
     <div class="field">
-      <div class="label big">📑 2. 結合 (Merge)</div>
+      <div class="label big">📑 1. 結合 (Merge)</div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
-      <div class="file-box">
+      <div class="file-box" id="merge-dropzone">
         <input type="file" id="merge-files" accept="application/pdf" multiple>
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="merge-empty" id="merge-empty">ファイルを2つ以上追加すると結合できます。</div>
+      <div class="merge-list" id="merge-list" aria-live="polite"></div>
     </div>
     <button class="btn" onclick="handleMerge()">結合して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="extract">
     <div class="field">
-      <div class="label big">✂️ 3. 分解・抽出 (Extract)</div>
-      <div class="helper">元のPDFから、指定したページ範囲だけを切り出します。</div>
-      <div class="file-box">
+      <div class="label big">✂️ 2. 分解・抽出 (Extract)</div>
+      <div class="helper">元のPDFから、指定したページ範囲または選択ページだけを切り出します。</div>
+      <div class="file-box" id="extract-dropzone">
         <input type="file" id="extract-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="extract-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -178,20 +487,25 @@
       </div>
     </div>
     <button class="btn" onclick="handleExtract()">抽出して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="insert">
     <div class="field">
-      <div class="label big">➕ 4. ページ追加 (Insert)</div>
+      <div class="label big">➕ 3. ページ追加 (Insert)</div>
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
-      <div class="file-box" style="margin-bottom:10px;">
+      <div class="file-box" id="insert-base-dropzone" style="margin-bottom:10px;">
         <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
         <input type="file" id="insert-base-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
-      <div class="file-box">
+      <div class="single-preview" id="insert-base-preview" style="margin-bottom:10px;"></div>
+      <div class="file-box" id="insert-add-dropzone">
         <div class="helper" style="margin:0 0 4px;">挿入したいPDF</div>
         <input type="file" id="insert-add-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="insert-add-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -201,15 +515,18 @@
       </div>
     </div>
     <button class="btn" onclick="handleInsert()">追加して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="delete">
     <div class="field">
-      <div class="label big">🗑️ 5. ページ削除 (Delete)</div>
-      <div class="helper">指定した不要なページを取り除きます。</div>
-      <div class="file-box">
+      <div class="label big">🗑️ 4. ページ削除 (Delete)</div>
+      <div class="helper">指定した不要ページ（複数選択可）を取り除きます。</div>
+      <div class="file-box" id="delete-dropzone">
         <input type="file" id="delete-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="delete-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -218,11 +535,15 @@
       </div>
     </div>
     <button class="btn" onclick="handleDelete()">削除して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
-    <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
+    <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
+    ｜ <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>
+    ｜ <a href="/tool-portal/terms.html" target="_blank" rel="noopener">利用条件</a>
+    ｜ <span id="build-rev">r16</span>（<span id="last-updated-date"></span>）
   </footer>
 </div>
 
@@ -238,18 +559,81 @@
   </div>
 </div>
 
+<div class="thumb-modal" id="thumb-modal" role="dialog" aria-label="PDFサムネイル拡大表示">
+  <div class="thumb-modal-card">
+    <canvas id="thumb-modal-canvas"></canvas>
+    <div class="single-note" style="margin-top:8px;">タップまたはクリックで閉じます。拡大表示は高解像度で描画されます。</div>
+  </div>
+</div>
+
 <script>
-  // 年度自動更新
+  // 年度・rev・最終更新日を自動更新
+  const VERSION = 'r16';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
+  const d = new Date(document.lastModified);
+  const yyyy = String(d.getFullYear());
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  document.getElementById('last-updated-date').textContent = `${yyyy}-${mm}-${dd}`;
+  document.getElementById('build-rev').textContent = VERSION;
 
   const { PDFDocument } = PDFLib;
+  const mergeFilesState = [];
+  const mergeInput = document.getElementById('merge-files');
+  const mergeDropzone = document.getElementById('merge-dropzone');
+  const mergeListEl = document.getElementById('merge-list');
+  const mergeEmptyEl = document.getElementById('merge-empty');
   const sysToastEl = document.getElementById('sysToast');
+  const thumbModalEl = document.getElementById('thumb-modal');
+  const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
+  const actionStatusEl = document.getElementById('action-status');
+  const featureBackEl = document.getElementById('feature-back');
+  const featureHomeEl = document.getElementById('feature-home');
+  const featurePanels = Array.from(document.querySelectorAll('.feature-panel[data-feature]'));
+  const singleFileState = {
+    'extract-file': null,
+    'insert-base-file': null,
+    'insert-add-file': null,
+    'delete-file': null,
+  };
+  const selectedPagesState = {
+    extract: new Set(),
+    delete: new Set(),
+  };
+
+  function showFeaturePanel(featureName) {
+    featureHomeEl.classList.remove('active');
+    featurePanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.feature === featureName));
+    featureBackEl.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showFeatureHome() {
+    featurePanels.forEach((panel) => panel.classList.remove('active'));
+    featureHomeEl.classList.add('active');
+    featureBackEl.classList.remove('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  let pdfjsLibPromise;
+
+  async function getPdfJsLib() {
+    if (!pdfjsLibPromise) {
+      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+    }
+    return pdfjsLibPromise;
+  }
 
   // --- ヘルパー関数 ---
   function showToast(msg, isError = false) {
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
     sysToastEl.style.borderColor = isError ? '#e74c3c' : 'rgba(87,136,153,.35)';
+    actionStatusEl.textContent = msg;
+    actionStatusEl.classList.toggle('error', isError);
     sysToastEl.classList.add('show');
     clearTimeout(showToast._timer);
     showToast._timer = setTimeout(() => {
@@ -277,39 +661,421 @@
     showToast('処理が完了し、ダウンロードを開始しました。');
   }
 
-  // --- 1. パスワード解除 ---
-  async function handleUnlock() {
-    const file = document.getElementById('unlock-file').files[0];
-    const password = document.getElementById('unlock-password').value;
-
-    if (!file) return showToast('ファイルを選択してください。', true);
-    if (!password) return showToast('パスワードを入力してください。', true);
-
-    showToast('処理中...');
+  function setSingleFileToInput(inputEl, file) {
     try {
-      const bytes = await readFileAsArrayBuffer(file);
-      const pdf = await PDFDocument.load(bytes, { password: password });
-      const pdfBytes = await pdf.save();
-      const originalName = file.name.replace(/\.[^/.]+$/, "");
-      downloadPDF(pdfBytes, `${originalName}_unlocked.pdf`);
-    } catch (e) {
-      if (e.message.includes('password')) {
-        showToast('パスワードが間違っているか、解除できない形式です。', true);
-      } else {
-        showToast('エラーが発生しました。', true);
-      }
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      inputEl.files = dt.files;
+    } catch (_) {
+      // Safari など DataTransfer の直接生成に未対応の環境では状態管理のみで処理する
     }
   }
 
-  // --- 2. 結合 ---
+  function getSelectedSingleFile(inputId) {
+    return singleFileState[inputId] || document.getElementById(inputId).files[0] || null;
+  }
+
+
+  function getSelectedPages(selectionKey) {
+    if (!selectionKey || !selectedPagesState[selectionKey]) return [];
+    return Array.from(selectedPagesState[selectionKey]).sort((a, b) => a - b);
+  }
+
+  function toggleSelectedPage(selectionKey, pageNum) {
+    if (!selectionKey || !selectedPagesState[selectionKey]) return;
+    const set = selectedPagesState[selectionKey];
+    if (set.has(pageNum)) set.delete(pageNum);
+    else set.add(pageNum);
+  }
+
+  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText, showAllPages = false, selectionKey = null }) {
+    const inputEl = document.getElementById(inputId);
+    const dropzoneEl = document.getElementById(dropzoneId);
+    const previewEl = document.getElementById(previewId);
+    if (!inputEl || !dropzoneEl || !previewEl) return;
+
+    const renderSinglePreview = async () => {
+      const updateSelectionNote = () => {
+        if (!selectionKey || !selectedPagesState[selectionKey]) return noteText;
+        const selectedCount = selectedPagesState[selectionKey].size;
+        return selectedCount ? `${noteText}（選択中: ${selectedCount}ページ / 拡大は[拡大]）` : `${noteText}（タップで選択・[拡大]で表示）`;
+      };
+
+      const file = getSelectedSingleFile(inputId);
+      if (!file) {
+        previewEl.classList.remove('show', 'multi-pages');
+        previewEl.innerHTML = '';
+        if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+        return;
+      }
+      previewEl.classList.add('show');
+      previewEl.classList.toggle('multi-pages', showAllPages);
+      previewEl.innerHTML = '';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap zoomable';
+      const canvas = document.createElement('canvas');
+      thumbWrap.appendChild(canvas);
+      thumbWrap.addEventListener('click', async () => {
+        await renderPdfThumbnail(file, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+        thumbModalEl.classList.add('show');
+      });
+
+      const meta = document.createElement('div');
+      meta.className = 'single-meta';
+      const name = document.createElement('p');
+      name.className = 'single-name';
+      name.textContent = file.name;
+      name.title = file.name;
+      const note = document.createElement('p');
+      note.className = 'single-note';
+      note.textContent = updateSelectionNote();
+      meta.append(name, note);
+
+      if (!showAllPages) {
+        previewEl.append(thumbWrap, meta);
+        await renderPdfThumbnail(file, canvas);
+        return;
+      }
+
+      const header = document.createElement('div');
+      header.className = 'single-preview-header';
+      header.append(thumbWrap, meta);
+      previewEl.appendChild(header);
+      await renderPdfThumbnail(file, canvas);
+
+      const pagesGrid = document.createElement('div');
+      pagesGrid.className = 'single-pages-grid';
+      previewEl.appendChild(pagesGrid);
+      await renderAllPdfPages(file, pagesGrid, { selectionKey, onSelectionChange: () => { note.textContent = updateSelectionNote(); } });
+    };
+
+    inputEl.addEventListener('change', () => {
+      singleFileState[inputId] = inputEl.files[0] || null;
+      if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+      renderSinglePreview();
+    });
+    ['dragenter', 'dragover'].forEach((eventName) => {
+      dropzoneEl.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzoneEl.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach((eventName) => {
+      dropzoneEl.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzoneEl.classList.remove('dragover');
+      });
+    });
+    dropzoneEl.addEventListener('drop', (e) => {
+      const files = Array.from(e.dataTransfer.files).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+      if (!files.length) return;
+      singleFileState[inputId] = files[0];
+      if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+      setSingleFileToInput(inputEl, files[0]);
+      renderSinglePreview();
+    });
+  }
+
+  async function renderPdfThumbnail(file, canvas, options = {}) {
+    const targetWidth = options.targetWidth || 88;
+    const targetHeight = options.targetHeight || 120;
+
+    const drawFallback = () => {
+      const ctx = canvas.getContext('2d');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      ctx.fillStyle = '#eff5f7';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#577783';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
+    };
+
+    // 先にプレースホルダーを描画して、読み込み失敗時でもサムネイル領域が空にならないようにする
+    drawFallback();
+
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+      const page = await pdf.getPage(1);
+      const viewport = page.getViewport({ scale: 1 });
+      const scale = Math.min(targetWidth / viewport.width, targetHeight / viewport.height);
+      const scaledViewport = page.getViewport({ scale });
+      canvas.width = scaledViewport.width;
+      canvas.height = scaledViewport.height;
+      const ctx = canvas.getContext('2d');
+      await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+    } catch (err) {
+      drawFallback();
+    }
+  }
+
+
+  async function renderAllPdfPages(file, container, options = {}) {
+    const selectionKey = options.selectionKey || null;
+    const onSelectionChange = options.onSelectionChange || (() => {});
+    container.innerHTML = '';
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const pdf = await loadingTask.promise;
+
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
+        const pageItem = document.createElement('div');
+        pageItem.className = 'single-page-item';
+
+        const pageThumb = document.createElement('div');
+        pageThumb.className = 'thumb-wrap zoomable';
+        const pageCanvas = document.createElement('canvas');
+        pageThumb.appendChild(pageCanvas);
+        if (!selectionKey) {
+          pageThumb.addEventListener('click', async () => {
+            await renderPdfPageToCanvas(pdf, pageNum, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+            thumbModalEl.classList.add('show');
+          });
+        }
+
+        const pageLabel = document.createElement('p');
+        pageLabel.className = 'single-page-number';
+        pageLabel.textContent = `${pageNum}ページ目`;
+
+        const actions = document.createElement('div');
+        actions.className = 'single-page-actions';
+
+        const zoomBtn = document.createElement('button');
+        zoomBtn.className = 'single-page-btn';
+        zoomBtn.type = 'button';
+        zoomBtn.textContent = '拡大';
+        zoomBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await renderPdfPageToCanvas(pdf, pageNum, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+          thumbModalEl.classList.add('show');
+        });
+
+        actions.appendChild(zoomBtn);
+
+        if (selectionKey) {
+          const selectBtn = document.createElement('button');
+          selectBtn.className = 'single-page-btn';
+          selectBtn.type = 'button';
+          const syncSelectBtn = () => {
+            const selected = selectedPagesState[selectionKey].has(pageNum);
+            selectBtn.textContent = selected ? '選択解除' : '選択';
+          };
+          selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSelectedPage(selectionKey, pageNum);
+            pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
+            syncSelectBtn();
+            onSelectionChange();
+          });
+          actions.appendChild(selectBtn);
+          if (selectedPagesState[selectionKey]?.has(pageNum)) {
+            pageItem.classList.add('selected');
+          }
+          syncSelectBtn();
+        }
+
+        pageThumb.addEventListener('contextmenu', (e) => e.preventDefault());
+        pageItem.addEventListener('dblclick', (e) => e.preventDefault());
+        pageItem.addEventListener('click', () => {
+          if (!selectionKey) return;
+          toggleSelectedPage(selectionKey, pageNum);
+          pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
+          const maybeBtn = actions.querySelector('.single-page-btn:last-child');
+          if (maybeBtn && maybeBtn.textContent !== '拡大') {
+            maybeBtn.textContent = selectedPagesState[selectionKey].has(pageNum) ? '選択解除' : '選択';
+          }
+          onSelectionChange();
+        });
+
+        pageItem.append(pageThumb, pageLabel, actions);
+        container.appendChild(pageItem);
+        await renderPdfPageToCanvas(pdf, pageNum, pageCanvas);
+      }
+    } catch (error) {
+      container.innerHTML = '';
+      const note = document.createElement('p');
+      note.className = 'single-note';
+      note.textContent = 'ページプレビューの読み込みに失敗しました。';
+      container.appendChild(note);
+    }
+  }
+
+  async function renderPdfPageToCanvas(pdf, pageNum, canvas, options = {}) {
+    const targetWidth = options.targetWidth || 88;
+    const targetHeight = options.targetHeight || 120;
+    const page = await pdf.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1 });
+    const scale = Math.min(targetWidth / viewport.width, targetHeight / viewport.height);
+    const scaledViewport = page.getViewport({ scale });
+    canvas.width = scaledViewport.width;
+    canvas.height = scaledViewport.height;
+    const ctx = canvas.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
+  }
+
+  function syncMergeVisibility() {
+    mergeEmptyEl.style.display = mergeFilesState.length ? 'none' : 'block';
+  }
+
+  function renderMergeList() {
+    mergeListEl.innerHTML = '';
+    mergeFilesState.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'merge-item';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap';
+      const canvas = document.createElement('canvas');
+      thumbWrap.appendChild(canvas);
+      thumbWrap.classList.add('zoomable');
+      thumbWrap.addEventListener('click', async () => {
+        await renderPdfThumbnail(item.file, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+        thumbModalEl.classList.add('show');
+      });
+
+      const meta = document.createElement('div');
+      meta.className = 'merge-meta';
+      const name = document.createElement('p');
+      name.className = 'merge-name';
+      name.textContent = item.file.name;
+      name.title = item.file.name;
+      const orderBadge = document.createElement('p');
+      orderBadge.className = 'merge-order-badge';
+      orderBadge.textContent = `${index + 1}番目`;
+
+      meta.append(name);
+
+      const actions = document.createElement('div');
+      actions.className = 'merge-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'mini-btn';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.type = 'button';
+      toggleBtn.addEventListener('click', () => {
+        item.expanded = !item.expanded;
+        renderMergeList();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'mini-btn';
+      removeBtn.textContent = '削除';
+      removeBtn.type = 'button';
+      removeBtn.addEventListener('click', () => {
+        mergeFilesState.splice(index, 1);
+        renderMergeList();
+      });
+
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveMergeItem(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === mergeFilesState.length - 1;
+      moveDownBtn.addEventListener('click', () => moveMergeItem(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
+
+      if (item.expanded) {
+        name.classList.add('expanded');
+        const fullName = document.createElement('p');
+        fullName.className = 'merge-fullname';
+        fullName.textContent = item.file.name;
+        meta.appendChild(fullName);
+      }
+
+      actions.append(toggleBtn, removeBtn, moveWrap);
+      row.append(orderBadge, thumbWrap, meta, actions);
+      mergeListEl.appendChild(row);
+      renderPdfThumbnail(item.file, canvas);
+    });
+
+    syncMergeVisibility();
+  }
+
+  function addFilesToMergeState(fileList) {
+    const files = Array.from(fileList).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+    files.forEach((file) => {
+      mergeFilesState.push({ file, expanded: false });
+    });
+    renderMergeList();
+  }
+
+  mergeInput.addEventListener('change', (e) => {
+    addFilesToMergeState(e.target.files);
+    mergeInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    mergeDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      mergeDropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    mergeDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      mergeDropzone.classList.remove('dragover');
+    });
+  });
+  mergeDropzone.addEventListener('drop', (e) => {
+    addFilesToMergeState(e.dataTransfer.files);
+  });
+
+  function moveMergeItem(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= mergeFilesState.length) return;
+    const [moved] = mergeFilesState.splice(index, 1);
+    mergeFilesState.splice(targetIndex, 0, moved);
+    renderMergeList();
+  }
+
+  thumbModalEl.addEventListener('click', () => {
+    thumbModalEl.classList.remove('show');
+  });
+
+  window.addEventListener('error', (event) => {
+    const rawMessage = event?.message || '';
+    const message = String(rawMessage).trim();
+    if (!message || message === 'Script error.' || message === 'Script error') return;
+    showToast(`エラー: ${message}`, true);
+  });
+
+  window.addEventListener('unhandledrejection', (event) => {
+    showToast(`エラー: ${event.reason?.message || '処理に失敗しました。'}`, true);
+  });
+
+  bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル', showAllPages: true, selectionKey: 'extract' });
+  bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
+  bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
+  bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
+
+  // --- 1. 結合 ---
   async function handleMerge() {
-    const files = document.getElementById('merge-files').files;
-    if (files.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
+    if (mergeFilesState.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
     
     showToast('処理中...');
     try {
       const mergedPdf = await PDFDocument.create();
-      for (let file of files) {
+      for (let { file } of mergeFilesState) {
         const bytes = await readFileAsArrayBuffer(file);
         const pdf = await PDFDocument.load(bytes);
         const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
@@ -322,14 +1088,15 @@
     }
   }
 
-  // --- 3. 抽出 ---
+  // --- 2. 抽出 ---
   async function handleExtract() {
-    const file = document.getElementById('extract-file').files[0];
+    const file = getSelectedSingleFile('extract-file');
     const start = parseInt(document.getElementById('extract-start').value);
     const end = parseInt(document.getElementById('extract-end').value);
+    const selectedPages = getSelectedPages('extract');
     
     if (!file) return showToast('ファイルを選択してください。', true);
-    if (start > end || start < 1) return showToast('正しいページ範囲を指定してください。', true);
+    if (!selectedPages.length && (start > end || start < 1)) return showToast('正しいページ範囲を指定してください。', true);
 
     showToast('処理中...');
     try {
@@ -337,24 +1104,28 @@
       const sourcePdf = await PDFDocument.load(bytes);
       const totalPages = sourcePdf.getPageCount();
 
-      if (end > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+      if (selectedPages.length && selectedPages.some((page) => page > totalPages)) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+      if (!selectedPages.length && end > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
 
       const newPdf = await PDFDocument.create();
-      const indices = Array.from({ length: end - start + 1 }, (_, i) => (start - 1) + i);
+      const indices = selectedPages.length
+        ? selectedPages.map((page) => page - 1)
+        : Array.from({ length: end - start + 1 }, (_, i) => (start - 1) + i);
       const copiedPages = await newPdf.copyPages(sourcePdf, indices);
       copiedPages.forEach((page) => newPdf.addPage(page));
 
       const pdfBytes = await newPdf.save();
-      downloadPDF(pdfBytes, `extracted_${start}-${end}.pdf`);
+      const extractSuffix = selectedPages.length ? `selected_${selectedPages.join('-')}` : `${start}-${end}`;
+      downloadPDF(pdfBytes, `extracted_${extractSuffix}.pdf`);
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
     }
   }
 
-  // --- 4. 追加 ---
+  // --- 3. 追加 ---
   async function handleInsert() {
-    const baseFile = document.getElementById('insert-base-file').files[0];
-    const addFile = document.getElementById('insert-add-file').files[0];
+    const baseFile = getSelectedSingleFile('insert-base-file');
+    const addFile = getSelectedSingleFile('insert-add-file');
     const position = parseInt(document.getElementById('insert-position').value);
 
     if (!baseFile || !addFile) return showToast('2つのファイルを選択してください。', true);
@@ -383,13 +1154,14 @@
     }
   }
 
-  // --- 5. 削除 ---
+  // --- 4. 削除 ---
   async function handleDelete() {
-    const file = document.getElementById('delete-file').files[0];
+    const file = getSelectedSingleFile('delete-file');
     const pageNum = parseInt(document.getElementById('delete-page').value);
+    const selectedPages = getSelectedPages('delete');
 
     if (!file) return showToast('ファイルを選択してください。', true);
-    if (pageNum < 1) return showToast('正しいページ番号を指定してください。', true);
+    if (!selectedPages.length && pageNum < 1) return showToast('正しいページ番号を指定してください。', true);
 
     showToast('処理中...');
     try {
@@ -397,9 +1169,11 @@
       const pdf = await PDFDocument.load(bytes);
       const totalPages = pdf.getPageCount();
       
-      if (pageNum > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+      if (selectedPages.length && selectedPages.some((page) => page > totalPages)) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+      if (!selectedPages.length && pageNum > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
 
-      pdf.removePage(pageNum - 1); 
+      const deleteTargets = selectedPages.length ? selectedPages : [pageNum];
+      deleteTargets.sort((a, b) => b - a).forEach((page) => pdf.removePage(page - 1));
       const pdfBytes = await pdf.save();
       downloadPDF(pdfBytes, 'deleted_document.pdf');
     } catch (e) {
