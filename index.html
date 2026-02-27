@@ -253,6 +253,7 @@
   /* footer */
   .mk-mini{ margin:24px 4px 6px; text-align:center;color:#667; font-size:11px;line-height:1.6; }
   .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+  .mk-rev{display:block; margin-top:4px; font-weight:700; color:#4f6570;}
 
   /* sticky nav */
   .mk-nav{position:fixed; left:0; right:0; bottom:0; z-index:999; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.92); border-top:1px solid var(--mk-line); backdrop-filter:saturate(180%) blur(10px);}
@@ -367,6 +368,7 @@
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
+    <span class="mk-rev">安心pdfマネージャー rev. r6</span>
   </footer>
 </div>
 
@@ -715,7 +717,7 @@
 
   // --- 2. 抽出 ---
   async function handleExtract() {
-    const file = document.getElementById('extract-file').files[0];
+    const file = getSelectedSingleFile('extract-file');
     const start = parseInt(document.getElementById('extract-start').value);
     const end = parseInt(document.getElementById('extract-end').value);
     
@@ -744,8 +746,8 @@
 
   // --- 3. 追加 ---
   async function handleInsert() {
-    const baseFile = document.getElementById('insert-base-file').files[0];
-    const addFile = document.getElementById('insert-add-file').files[0];
+    const baseFile = getSelectedSingleFile('insert-base-file');
+    const addFile = getSelectedSingleFile('insert-add-file');
     const position = parseInt(document.getElementById('insert-position').value);
 
     if (!baseFile || !addFile) return showToast('2つのファイルを選択してください。', true);
@@ -776,7 +778,7 @@
 
   // --- 4. 削除 ---
   async function handleDelete() {
-    const file = document.getElementById('delete-file').files[0];
+    const file = getSelectedSingleFile('delete-file');
     const pageNum = parseInt(document.getElementById('delete-page').value);
 
     if (!file) return showToast('ファイルを選択してください。', true);
