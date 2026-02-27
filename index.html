@@ -402,7 +402,18 @@
   const sysToastEl = document.getElementById('sysToast');
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
-  const actionStatusEl = document.getElementById('action-status');
+
+  let pdfjsLibPromise;
+
+  async function getPdfJsLib() {
+    if (!pdfjsLibPromise) {
+      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+    }
+    return pdfjsLibPromise;
+  }
 
   let pdfjsLibPromise;
 
@@ -518,21 +529,6 @@
   }
 
   async function renderPdfThumbnail(file, canvas) {
-    const drawFallback = () => {
-      const ctx = canvas.getContext('2d');
-      canvas.width = 88;
-      canvas.height = 120;
-      ctx.fillStyle = '#eff5f7';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.fillStyle = '#577783';
-      ctx.font = 'bold 11px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
-    };
-
-    // 先にプレースホルダーを描画して、読み込み失敗時でもサムネイル領域が空にならないようにする
-    drawFallback();
-
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
@@ -547,7 +543,15 @@
       const ctx = canvas.getContext('2d');
       await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
     } catch (err) {
-      drawFallback();
+      const ctx = canvas.getContext('2d');
+      canvas.width = 88;
+      canvas.height = 120;
+      ctx.fillStyle = '#eff5f7';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#577783';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('PDF', canvas.width / 2, canvas.height / 2 + 4);
     }
   }
 
@@ -682,14 +686,6 @@
 
   thumbModalEl.addEventListener('click', () => {
     thumbModalEl.classList.remove('show');
-  });
-
-  window.addEventListener('error', (event) => {
-    showToast(`エラー: ${event.message}`, true);
-  });
-
-  window.addEventListener('unhandledrejection', (event) => {
-    showToast(`エラー: ${event.reason?.message || '処理に失敗しました。'}`, true);
   });
 
   bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル' });
