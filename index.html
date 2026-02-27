@@ -56,12 +56,247 @@
   /* Inputs (トンマナに合わせたファイル・テキスト入力枠) */
   .file-box {
     background:#f8fcfd; border: 2px dashed #7aa2b0;
-    border-radius:12px; padding:12px;
+    border-radius:12px; padding:16px;
+    min-height:112px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+    text-align:center;
     transition: background-color .28s ease, border-color .28s ease;
   }
   .file-box:hover { background: #eef7f8; border-color: #578899; }
   .file-box input[type="file"] {
-    width: 100%; font-size: 14px; color: var(--ink); cursor: pointer;
+    width:min(100%, 360px);
+    font-size:14px;
+    color:var(--ink);
+    cursor:pointer;
+    margin:0 auto;
+  }
+  .file-box.dragover {
+    background:#e9f4f7;
+    border-color:#3e6f80;
+  }
+  .drop-hint {
+    font-size:12px;
+    color:#4f6570;
+    margin-top:0;
+    text-align:center;
+  }
+  .merge-list {
+    margin-top:12px;
+    display:grid;
+    gap:10px;
+  }
+  .merge-item {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:38px 10px 10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+  }
+  .thumb-wrap {
+    width:88px;
+    height:120px;
+    border-radius:8px;
+    border:1px solid #ccdce0;
+    overflow:hidden;
+    background:#f3f8fa;
+    flex:0 0 auto;
+    display:grid;
+    place-items:center;
+  }
+  .thumb-wrap canvas {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+  }
+  .thumb-wrap.zoomable { cursor: zoom-in; }
+  .thumb-wrap.zoomable:hover {
+    transform:scale(1.08);
+    transition:transform .2s ease;
+  }
+  .single-preview {
+    margin-top:10px;
+    display:none;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+  }
+  .single-preview.show { display:flex; }
+  .single-preview.multi-pages {
+    display:block;
+  }
+  .single-preview-header {
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .single-pages-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(88px,1fr));
+    gap:10px;
+  }
+  .single-page-item {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:4px;
+  }
+  .single-page-item .thumb-wrap {
+    width:100%;
+    max-width:110px;
+    aspect-ratio: 11 / 15;
+    height:auto;
+  }
+  .single-page-number {
+    margin:0;
+    font-size:11px;
+    color:#66808a;
+  }
+  .single-page-actions {
+    display:flex;
+    gap:6px;
+  }
+  .single-page-btn {
+    border:1px solid #ccdce0;
+    border-radius:8px;
+    background:#fff;
+    color:#35535d;
+    font-size:10px;
+    font-weight:800;
+    padding:4px 6px;
+    cursor:pointer;
+  }
+  .single-page-item.selected .thumb-wrap {
+    border:2px solid #578899;
+    box-shadow:0 0 0 2px rgba(87,136,153,.2);
+  }
+  .single-page-item.selected .single-page-number {
+    color:#2d5a67;
+    font-weight:800;
+  }
+  .single-meta { min-width:0; }
+  .single-name {
+    margin:0;
+    font-size:12px;
+    color:#35535d;
+    line-height:1.4;
+    max-width:240px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+  }
+  .single-note {
+    margin:4px 0 0;
+    font-size:11px;
+    color:#6a7a7d;
+  }
+  .thumb-modal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1300;
+    padding:20px;
+  }
+  .thumb-modal.show { display:flex; }
+  .thumb-modal-card {
+    width:min(96vw,920px);
+    border-radius:12px;
+    background:#fff;
+    padding:14px;
+  }
+  .thumb-modal canvas {
+    width:100%;
+    max-height:72vh;
+    object-fit:contain;
+    border:1px solid #d9eaed;
+    border-radius:8px;
+    background:#f3f8fa;
+  }
+  .merge-meta { min-width:0; flex:1; overflow:hidden; }
+  .merge-name {
+    margin:0;
+    display:block;
+    max-width:100%;
+    font-size:13px;
+    line-height:1.35;
+    color:#263a40;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+  }
+  .merge-fullname {
+    margin:8px 0 0;
+    padding:8px;
+    border-radius:8px;
+    background:#f6fbfc;
+    color:#27424a;
+    font-size:12px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+  }
+  .merge-name.expanded {
+    white-space:normal;
+    word-break:break-all;
+  }
+  .merge-order-badge {
+    position:absolute;
+    left:10px;
+    top:10px;
+    margin:0;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#e9f4f7;
+    color:#2d5a67;
+    font-size:13px;
+    font-weight:900;
+  }
+  .merge-actions {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .merge-move {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .mini-btn {
+    border:1px solid #ccdce0;
+    border-radius:10px;
+    background:#fff;
+    color:#35535d;
+    font-size:11px;
+    font-weight:700;
+    padding:6px 8px;
+    cursor:pointer;
+  }
+  .mini-btn.move-btn {
+    min-width:34px;
+    padding:4px 8px;
+    font-size:14px;
+    line-height:1;
+  }
+  .mini-btn:disabled {
+    opacity:.45;
+    cursor:not-allowed;
+  }
+  .merge-empty {
+    margin-top:10px;
+    font-size:12px;
+    color:#6a7a7d;
   }
   .file-box.dragover {
     background:#e9f4f7;
@@ -524,7 +759,7 @@
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
     ｜ <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>
     ｜ <a href="/tool-portal/terms.html" target="_blank" rel="noopener">利用条件</a>
-    ｜ <span id="build-rev">r14</span>（<span id="last-updated-date"></span>）
+    ｜ <span id="build-rev">r15</span>（<span id="last-updated-date"></span>）
   </footer>
 </div>
 
@@ -549,7 +784,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r14';
+  const VERSION = 'r15';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
