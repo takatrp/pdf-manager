@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>セキュアPDFツール｜松本会計事務所</title>
+<title>安心pdfマネージャー｜松本会計事務所</title>
 
 <meta name="theme-color" content="#578899" />
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
@@ -95,8 +95,8 @@
     border-style:dashed;
   }
   .thumb-wrap {
-    width:52px;
-    height:70px;
+    width:88px;
+    height:120px;
     border-radius:8px;
     border:1px solid #ccdce0;
     overflow:hidden;
@@ -219,7 +219,7 @@
       <a class="logo-link" href="https://takatrp.github.io/tool-portal/" target="_blank" rel="noopener">
         <img src="ロゴ.jpg" alt="松本会計事務所ロゴ" class="logo" onerror="this.style.display='none'" />
       </a>
-      <h1 class="title">セキュアPDFツール</h1>
+      <h1 class="title">安心pdfマネージャー</h1>
     </div>
     <div class="subtitle">
       顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
@@ -395,7 +395,7 @@
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
       const viewport = page.getViewport({ scale: 1 });
-      const scale = Math.min(52 / viewport.width, 70 / viewport.height);
+      const scale = Math.min(88 / viewport.width, 120 / viewport.height);
       const scaledViewport = page.getViewport({ scale });
       canvas.width = scaledViewport.width;
       canvas.height = scaledViewport.height;
@@ -403,8 +403,8 @@
       await page.render({ canvasContext: ctx, viewport: scaledViewport }).promise;
     } catch (err) {
       const ctx = canvas.getContext('2d');
-      canvas.width = 52;
-      canvas.height = 70;
+      canvas.width = 88;
+      canvas.height = 120;
       ctx.fillStyle = '#eff5f7';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.fillStyle = '#577783';
