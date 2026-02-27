@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>セキュアPDFツール｜松本会計事務所</title>
+
+<meta name="theme-color" content="#578899" />
+<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+
+<style>
+  :root {
+    --bg:#f4f9fb; --card:#fff; --ink:#1e2a2d; --muted:#5a6a6d;
+    --accent:#578899; --accent-2:#7aa2b0; --shadow:0 10px 30px rgba(35,80,90,.12);
+    --warn: #e74c3c; --success: #27ae60;
+    --mk-brand:#578899; --mk-line:#e2e8f0; --mk-ink:#0f172a; --mk-muted:#64748b;
+  }
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",Segoe UI,Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding-bottom: calc(62px + env(safe-area-inset-bottom));
+  }
+  .wrap{
+    padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  /* header */
+  header{padding:8px 6px 2px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .logo-link{display:inline-flex;line-height:0;text-decoration:none}
+  .logo{height:48px;width:auto;object-fit:contain}
+  .title{
+    flex:1;min-width:0;white-space:nowrap;margin:0;
+    font-weight:800;letter-spacing:.02em;line-height:1.2;
+    font-size:clamp(16px,4.6vw,22px);color:#0e2430;
+  }
+  .subtitle{color:#5a6a6d;font-size:12px;margin:6px 0 0; line-height: 1.5;}
+
+  /* card & fields */
+  .card{
+    background:#fff;border-radius:16px;
+    box-shadow:0 10px 30px rgba(35,80,90,.12);
+    padding:20px 16px;margin:16px 0;
+  }
+  .card.feature-unlock {
+    border: 2px solid #f2b632; /* パスワード解除を目立たせる */
+  }
+  .field{margin:0 0 20px}
+  .field:last-child { margin-bottom: 0; }
+  .label.big{font-size:16px;font-weight:800;color:#324245; margin-bottom: 8px;}
+  .helper{font-size:12px;color:#6a7a7d;margin:4px 0 8px; line-height: 1.4;}
+
+  /* Inputs (トンマナに合わせたファイル・テキスト入力枠) */
+  .file-box {
+    background:#f8fcfd; border: 2px dashed #7aa2b0;
+    border-radius:12px; padding:12px;
+    transition: background-color .28s ease, border-color .28s ease;
+  }
+  .file-box:hover { background: #eef7f8; border-color: #578899; }
+  .file-box input[type="file"] {
+    width: 100%; font-size: 14px; color: var(--ink); cursor: pointer;
+  }
+  
+  .input-text, .input-num {
+    background:#f8fcfd; border:1px solid #d9eaed;
+    border-radius:12px; padding:12px 14px;
+    font-size:16px; color:var(--ink); width:100%; box-sizing: border-box;
+    transition: border-color .28s ease, box-shadow .28s ease;
+  }
+  .input-text:focus, .input-num:focus {
+    outline: none; border-color: #578899;
+    box-shadow: 0 0 0 2px rgba(87,136,153,.15);
+  }
+  .flex-row { display: flex; align-items: center; gap: 10px; }
+  .flex-row .input-num { flex: 1; text-align: center; font-weight: bold; }
+  .flex-row span { font-weight: bold; color: var(--muted); }
+
+  /* buttons */
+  .btn{
+    background:linear-gradient(180deg,#7aa2b0,#578899);
+    color:#fff;font-weight:900;border:0;width:100%;
+    border-radius:12px;padding:16px 18px;font-size:16px;
+    box-shadow:0 10px 30px rgba(35,80,90,.12);
+    cursor: pointer;
+    transition: transform 0.1s;
+    margin-top: 4px;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.warn{ background: linear-gradient(180deg, #f5d061, #f2b632); color: #925f00; text-shadow: 0 1px 0 rgba(255,255,255,0.4);}
+
+  /* Toast notification */
+  .sys-toast{
+    position:fixed; left:50%; top:74px; transform:translateX(-50%) translateY(-8px);
+    z-index:1200; padding:12px 20px; border-radius:999px;
+    border:1px solid rgba(87,136,153,.35); background:#fff;
+    box-shadow:0 12px 30px rgba(20,40,50,.12); font-size:14px; font-weight:900;
+    color:#1e2a2d; opacity:0; pointer-events:none;
+    transition:.18s transform,.18s opacity;
+    max-width:min(92vw,560px); white-space:nowrap;
+  }
+  .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* footer */
+  .mk-mini{ margin:24px 4px 6px; text-align:center;color:#667; font-size:11px;line-height:1.6; }
+  .mk-mini a{ color:inherit; text-decoration:underline; text-underline-offset:2px; }
+
+  /* sticky nav */
+  .mk-nav{position:fixed; left:0; right:0; bottom:0; z-index:999; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.92); border-top:1px solid var(--mk-line); backdrop-filter:saturate(180%) blur(10px);}
+  .mk-nav .inner{max-width:1100px; margin:0 auto; display:flex; gap:10px; align-items:center; justify-content:space-between;}
+  .mk-nav .left{display:flex; flex-direction:column; gap:2px; min-width:0;}
+  .mk-nav .hint{font-size:11px; color:var(--mk-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .mk-nav .btns{display:flex; gap:8px; flex:0 0 auto;}
+  .mk-nav a{display:inline-flex; align-items:center; justify-content:center; height:36px; padding:0 12px; border-radius:12px; border:1px solid var(--mk-line); text-decoration:none; font-weight:800; color:var(--mk-ink); background:#fff;}
+  .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="sys-toast" id="sysToast" role="status" aria-live="polite">処理が完了しました</div>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <a class="logo-link" href="https://takatrp.github.io/tool-portal/" target="_blank" rel="noopener">
+        <img src="ロゴ.jpg" alt="松本会計事務所ロゴ" class="logo" onerror="this.style.display='none'" />
+      </a>
+      <h1 class="title">セキュアPDFツール</h1>
+    </div>
+    <div class="subtitle">
+      顧問先様の機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
+    </div>
+  </header>
+
+  <section class="card feature-unlock">
+    <div class="field">
+      <div class="label big">🔓 1. パスワード解除</div>
+      <div class="helper">※保護されたPDFを編集したい場合は、まずここで解除してください。</div>
+      <div class="file-box">
+        <input type="file" id="unlock-file" accept="application/pdf">
+      </div>
+    </div>
+    <div class="field">
+      <input type="password" id="unlock-password" class="input-text" placeholder="設定されているパスワードを入力">
+    </div>
+    <button class="btn warn" onclick="handleUnlock()">保護を解除して保存</button>
+  </section>
+
+  <section class="card">
+    <div class="field">
+      <div class="label big">📑 2. 結合 (Merge)</div>
+      <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
+      <div class="file-box">
+        <input type="file" id="merge-files" accept="application/pdf" multiple>
+      </div>
+    </div>
+    <button class="btn" onclick="handleMerge()">結合して保存</button>
+  </section>
+
+  <section class="card">
+    <div class="field">
+      <div class="label big">✂️ 3. 分解・抽出 (Extract)</div>
+      <div class="helper">元のPDFから、指定したページ範囲だけを切り出します。</div>
+      <div class="file-box">
+        <input type="file" id="extract-file" accept="application/pdf">
+      </div>
+    </div>
+    <div class="field">
+      <div class="flex-row">
+        <input type="number" id="extract-start" class="input-num" min="1" value="1" placeholder="開始">
+        <span>〜</span>
+        <input type="number" id="extract-end" class="input-num" min="1" value="1" placeholder="終了">
+        <span>ページ</span>
+      </div>
+    </div>
+    <button class="btn" onclick="handleExtract()">抽出して保存</button>
+  </section>
+
+  <section class="card">
+    <div class="field">
+      <div class="label big">➕ 4. ページ追加 (Insert)</div>
+      <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
+      <div class="file-box" style="margin-bottom:10px;">
+        <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
+        <input type="file" id="insert-base-file" accept="application/pdf">
+      </div>
+      <div class="file-box">
+        <div class="helper" style="margin:0 0 4px;">挿入したいPDF</div>
+        <input type="file" id="insert-add-file" accept="application/pdf">
+      </div>
+    </div>
+    <div class="field">
+      <div class="flex-row">
+        <span>挿入位置：</span>
+        <input type="number" id="insert-position" class="input-num" min="1" value="2" style="max-width: 100px;">
+        <span>ページ目として</span>
+      </div>
+    </div>
+    <button class="btn" onclick="handleInsert()">追加して保存</button>
+  </section>
+
+  <section class="card">
+    <div class="field">
+      <div class="label big">🗑️ 5. ページ削除 (Delete)</div>
+      <div class="helper">指定した不要なページを取り除きます。</div>
+      <div class="file-box">
+        <input type="file" id="delete-file" accept="application/pdf">
+      </div>
+    </div>
+    <div class="field">
+      <div class="flex-row">
+        <span>削除するページ：</span>
+        <input type="number" id="delete-page" class="input-num" min="1" value="1" style="max-width: 100px;">
+      </div>
+    </div>
+    <button class="btn" onclick="handleDelete()">削除して保存</button>
+  </section>
+
+  <footer class="mk-mini">
+    © <span id="cpy-year">2025</span>
+    <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
+  </footer>
+</div>
+
+<div class="mk-nav" id="mk-nav">
+  <div class="inner">
+    <div class="left">
+      <div style="font-weight:900;">松本会計ツール</div>
+      <div class="hint">ポータルへ戻る</div>
+    </div>
+    <div class="btns">
+      <a href="https://takatrp.github.io/tool-portal/" id="mk-back">← ポータル</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  // 年度自動更新
+  document.getElementById('cpy-year').textContent = new Date().getFullYear();
+
+  const { PDFDocument } = PDFLib;
+  const sysToastEl = document.getElementById('sysToast');
+
+  // --- ヘルパー関数 ---
+  function showToast(msg, isError = false) {
+    sysToastEl.textContent = msg;
+    sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
+    sysToastEl.style.borderColor = isError ? '#e74c3c' : 'rgba(87,136,153,.35)';
+    sysToastEl.classList.add('show');
+    clearTimeout(showToast._timer);
+    showToast._timer = setTimeout(() => {
+      sysToastEl.classList.remove('show');
+    }, 3000);
+  }
+
+  async function readFileAsArrayBuffer(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function downloadPDF(pdfBytes, filename) {
+    const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('処理が完了し、ダウンロードを開始しました。');
+  }
+
+  // --- 1. パスワード解除 ---
+  async function handleUnlock() {
+    const file = document.getElementById('unlock-file').files[0];
+    const password = document.getElementById('unlock-password').value;
+
+    if (!file) return showToast('ファイルを選択してください。', true);
+    if (!password) return showToast('パスワードを入力してください。', true);
+
+    showToast('処理中...');
+    try {
+      const bytes = await readFileAsArrayBuffer(file);
+      const pdf = await PDFDocument.load(bytes, { password: password });
+      const pdfBytes = await pdf.save();
+      const originalName = file.name.replace(/\.[^/.]+$/, "");
+      downloadPDF(pdfBytes, `${originalName}_unlocked.pdf`);
+    } catch (e) {
+      if (e.message.includes('password')) {
+        showToast('パスワードが間違っているか、解除できない形式です。', true);
+      } else {
+        showToast('エラーが発生しました。', true);
+      }
+    }
+  }
+
+  // --- 2. 結合 ---
+  async function handleMerge() {
+    const files = document.getElementById('merge-files').files;
+    if (files.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
+    
+    showToast('処理中...');
+    try {
+      const mergedPdf = await PDFDocument.create();
+      for (let file of files) {
+        const bytes = await readFileAsArrayBuffer(file);
+        const pdf = await PDFDocument.load(bytes);
+        const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+        copiedPages.forEach((page) => mergedPdf.addPage(page));
+      }
+      const pdfBytes = await mergedPdf.save();
+      downloadPDF(pdfBytes, 'merged_document.pdf');
+    } catch (e) {
+      showToast('エラー: 保護されたファイルが含まれていないか確認してください。', true);
+    }
+  }
+
+  // --- 3. 抽出 ---
+  async function handleExtract() {
+    const file = document.getElementById('extract-file').files[0];
+    const start = parseInt(document.getElementById('extract-start').value);
+    const end = parseInt(document.getElementById('extract-end').value);
+    
+    if (!file) return showToast('ファイルを選択してください。', true);
+    if (start > end || start < 1) return showToast('正しいページ範囲を指定してください。', true);
+
+    showToast('処理中...');
+    try {
+      const bytes = await readFileAsArrayBuffer(file);
+      const sourcePdf = await PDFDocument.load(bytes);
+      const totalPages = sourcePdf.getPageCount();
+
+      if (end > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+
+      const newPdf = await PDFDocument.create();
+      const indices = Array.from({ length: end - start + 1 }, (_, i) => (start - 1) + i);
+      const copiedPages = await newPdf.copyPages(sourcePdf, indices);
+      copiedPages.forEach((page) => newPdf.addPage(page));
+
+      const pdfBytes = await newPdf.save();
+      downloadPDF(pdfBytes, `extracted_${start}-${end}.pdf`);
+    } catch (e) {
+      showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+
+  // --- 4. 追加 ---
+  async function handleInsert() {
+    const baseFile = document.getElementById('insert-base-file').files[0];
+    const addFile = document.getElementById('insert-add-file').files[0];
+    const position = parseInt(document.getElementById('insert-position').value);
+
+    if (!baseFile || !addFile) return showToast('2つのファイルを選択してください。', true);
+    if (position < 1) return showToast('正しいページ位置を指定してください。', true);
+
+    showToast('処理中...');
+    try {
+      const baseBytes = await readFileAsArrayBuffer(baseFile);
+      const addBytes = await readFileAsArrayBuffer(addFile);
+      const basePdf = await PDFDocument.load(baseBytes);
+      const addPdf = await PDFDocument.load(addBytes);
+      
+      const totalPages = basePdf.getPageCount();
+      let insertIndex = position - 1;
+      if (insertIndex > totalPages) insertIndex = totalPages;
+
+      const copiedPages = await basePdf.copyPages(addPdf, addPdf.getPageIndices());
+      copiedPages.forEach((page, index) => {
+        basePdf.insertPage(insertIndex + index, page);
+      });
+
+      const pdfBytes = await basePdf.save();
+      downloadPDF(pdfBytes, 'inserted_document.pdf');
+    } catch (e) {
+      showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+
+  // --- 5. 削除 ---
+  async function handleDelete() {
+    const file = document.getElementById('delete-file').files[0];
+    const pageNum = parseInt(document.getElementById('delete-page').value);
+
+    if (!file) return showToast('ファイルを選択してください。', true);
+    if (pageNum < 1) return showToast('正しいページ番号を指定してください。', true);
+
+    showToast('処理中...');
+    try {
+      const bytes = await readFileAsArrayBuffer(file);
+      const pdf = await PDFDocument.load(bytes);
+      const totalPages = pdf.getPageCount();
+      
+      if (pageNum > totalPages) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+
+      pdf.removePage(pageNum - 1); 
+      const pdfBytes = await pdf.save();
+      downloadPDF(pdfBytes, 'deleted_document.pdf');
+    } catch (e) {
+      showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+</script>
+</body>
+</html>
