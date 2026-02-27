@@ -238,7 +238,7 @@
 
   /* Toast notification */
   .sys-toast{
-    position:fixed; left:50%; top:74px; transform:translateX(-50%) translateY(-8px);
+    position:fixed; left:50%; bottom:calc(80px + env(safe-area-inset-bottom)); top:auto; transform:translateX(-50%) translateY(8px);
     z-index:1200; padding:12px 20px; border-radius:999px;
     border:1px solid rgba(87,136,153,.35); background:#fff;
     box-shadow:0 12px 30px rgba(20,40,50,.12); font-size:14px; font-weight:900;
