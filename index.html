@@ -47,9 +47,6 @@
     box-shadow:0 10px 30px rgba(35,80,90,.12);
     padding:20px 16px;margin:16px 0;
   }
-  .card.feature-unlock {
-    border: 2px solid #f2b632; /* パスワード解除を目立たせる */
-  }
   .field{margin:0 0 20px}
   .field:last-child { margin-bottom: 0; }
   .label.big{font-size:16px;font-weight:800;color:#324245; margin-bottom: 8px;}
@@ -109,6 +106,63 @@
     width:100%;
     height:100%;
     object-fit:cover;
+  }
+  .thumb-wrap.zoomable { cursor: zoom-in; }
+  .thumb-wrap.zoomable:hover {
+    transform:scale(1.08);
+    transition:transform .2s ease;
+  }
+  .single-preview {
+    margin-top:10px;
+    display:none;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+  }
+  .single-preview.show { display:flex; }
+  .single-meta { min-width:0; }
+  .single-name {
+    margin:0;
+    font-size:12px;
+    color:#35535d;
+    line-height:1.4;
+    max-width:240px;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    overflow:hidden;
+  }
+  .single-note {
+    margin:4px 0 0;
+    font-size:11px;
+    color:#6a7a7d;
+  }
+  .thumb-modal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:1300;
+    padding:20px;
+  }
+  .thumb-modal.show { display:flex; }
+  .thumb-modal-card {
+    width:min(90vw,500px);
+    border-radius:12px;
+    background:#fff;
+    padding:14px;
+  }
+  .thumb-modal canvas {
+    width:100%;
+    max-height:72vh;
+    object-fit:contain;
+    border:1px solid #d9eaed;
+    border-radius:8px;
+    background:#f3f8fa;
   }
   .merge-meta { min-width:0; flex:1; }
   .merge-name {
@@ -181,7 +235,6 @@
     margin-top: 4px;
   }
   .btn:active{transform:translateY(1px)}
-  .btn.warn{ background: linear-gradient(180deg, #f5d061, #f2b632); color: #925f00; text-shadow: 0 1px 0 rgba(255,255,255,0.4);}
 
   /* Toast notification */
   .sys-toast{
@@ -226,23 +279,10 @@
     </div>
   </header>
 
-  <section class="card feature-unlock">
-    <div class="field">
-      <div class="label big">🔓 1. パスワード解除</div>
-      <div class="helper">※保護されたPDFを編集したい場合は、まずここで解除してください。</div>
-      <div class="file-box">
-        <input type="file" id="unlock-file" accept="application/pdf">
-      </div>
-    </div>
-    <div class="field">
-      <input type="password" id="unlock-password" class="input-text" placeholder="設定されているパスワードを入力">
-    </div>
-    <button class="btn warn" onclick="handleUnlock()">保護を解除して保存</button>
-  </section>
 
   <section class="card">
     <div class="field">
-      <div class="label big">📑 2. 結合 (Merge)</div>
+      <div class="label big">📑 1. 結合 (Merge)</div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
       <div class="file-box" id="merge-dropzone">
         <input type="file" id="merge-files" accept="application/pdf" multiple>
@@ -256,11 +296,13 @@
 
   <section class="card">
     <div class="field">
-      <div class="label big">✂️ 3. 分解・抽出 (Extract)</div>
+      <div class="label big">✂️ 2. 分解・抽出 (Extract)</div>
       <div class="helper">元のPDFから、指定したページ範囲だけを切り出します。</div>
-      <div class="file-box">
+      <div class="file-box" id="extract-dropzone">
         <input type="file" id="extract-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="extract-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -275,16 +317,20 @@
 
   <section class="card">
     <div class="field">
-      <div class="label big">➕ 4. ページ追加 (Insert)</div>
+      <div class="label big">➕ 3. ページ追加 (Insert)</div>
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
-      <div class="file-box" style="margin-bottom:10px;">
+      <div class="file-box" id="insert-base-dropzone" style="margin-bottom:10px;">
         <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
         <input type="file" id="insert-base-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
-      <div class="file-box">
+      <div class="single-preview" id="insert-base-preview" style="margin-bottom:10px;"></div>
+      <div class="file-box" id="insert-add-dropzone">
         <div class="helper" style="margin:0 0 4px;">挿入したいPDF</div>
         <input type="file" id="insert-add-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="insert-add-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -298,11 +344,13 @@
 
   <section class="card">
     <div class="field">
-      <div class="label big">🗑️ 5. ページ削除 (Delete)</div>
+      <div class="label big">🗑️ 4. ページ削除 (Delete)</div>
       <div class="helper">指定した不要なページを取り除きます。</div>
-      <div class="file-box">
+      <div class="file-box" id="delete-dropzone">
         <input type="file" id="delete-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
+      <div class="single-preview" id="delete-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
@@ -331,6 +379,13 @@
   </div>
 </div>
 
+<div class="thumb-modal" id="thumb-modal" role="dialog" aria-label="PDFサムネイル拡大表示">
+  <div class="thumb-modal-card">
+    <canvas id="thumb-modal-canvas"></canvas>
+    <div class="single-note" style="margin-top:8px;">タップまたはクリックで閉じます。</div>
+  </div>
+</div>
+
 <script>
   // 年度自動更新
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
@@ -342,6 +397,20 @@
   const mergeListEl = document.getElementById('merge-list');
   const mergeEmptyEl = document.getElementById('merge-empty');
   const sysToastEl = document.getElementById('sysToast');
+  const thumbModalEl = document.getElementById('thumb-modal');
+  const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
+
+  let pdfjsLibPromise;
+
+  async function getPdfJsLib() {
+    if (!pdfjsLibPromise) {
+      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+        return pdfjsLib;
+      });
+    }
+    return pdfjsLibPromise;
+  }
 
   let pdfjsLibPromise;
 
@@ -387,6 +456,73 @@
     showToast('処理が完了し、ダウンロードを開始しました。');
   }
 
+  function setSingleFileToInput(inputEl, file) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    inputEl.files = dt.files;
+  }
+
+  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText }) {
+    const inputEl = document.getElementById(inputId);
+    const dropzoneEl = document.getElementById(dropzoneId);
+    const previewEl = document.getElementById(previewId);
+    if (!inputEl || !dropzoneEl || !previewEl) return;
+
+    const renderSinglePreview = async () => {
+      const file = inputEl.files[0];
+      if (!file) {
+        previewEl.classList.remove('show');
+        previewEl.innerHTML = '';
+        return;
+      }
+      previewEl.classList.add('show');
+      previewEl.innerHTML = '';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap zoomable';
+      const canvas = document.createElement('canvas');
+      thumbWrap.appendChild(canvas);
+      thumbWrap.addEventListener('click', async () => {
+        await renderPdfThumbnail(file, thumbModalCanvas);
+        thumbModalEl.classList.add('show');
+      });
+
+      const meta = document.createElement('div');
+      meta.className = 'single-meta';
+      const name = document.createElement('p');
+      name.className = 'single-name';
+      name.textContent = file.name;
+      name.title = file.name;
+      const note = document.createElement('p');
+      note.className = 'single-note';
+      note.textContent = noteText;
+      meta.append(name, note);
+
+      previewEl.append(thumbWrap, meta);
+      await renderPdfThumbnail(file, canvas);
+    };
+
+    inputEl.addEventListener('change', renderSinglePreview);
+    ['dragenter', 'dragover'].forEach((eventName) => {
+      dropzoneEl.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzoneEl.classList.add('dragover');
+      });
+    });
+    ['dragleave', 'drop'].forEach((eventName) => {
+      dropzoneEl.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        dropzoneEl.classList.remove('dragover');
+      });
+    });
+    dropzoneEl.addEventListener('drop', (e) => {
+      const files = Array.from(e.dataTransfer.files).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+      if (!files.length) return;
+      setSingleFileToInput(inputEl, files[0]);
+      renderSinglePreview();
+    });
+  }
+
   async function renderPdfThumbnail(file, canvas) {
     try {
       const pdfjsLib = await getPdfJsLib();
@@ -430,6 +566,11 @@
       thumbWrap.className = 'thumb-wrap';
       const canvas = document.createElement('canvas');
       thumbWrap.appendChild(canvas);
+      thumbWrap.classList.add('zoomable');
+      thumbWrap.addEventListener('click', async () => {
+        await renderPdfThumbnail(item.file, thumbModalCanvas);
+        thumbModalEl.classList.add('show');
+      });
 
       const meta = document.createElement('div');
       meta.className = 'merge-meta';
@@ -538,31 +679,16 @@
     renderMergeList();
   });
 
-  // --- 1. パスワード解除 ---
-  async function handleUnlock() {
-    const file = document.getElementById('unlock-file').files[0];
-    const password = document.getElementById('unlock-password').value;
+  thumbModalEl.addEventListener('click', () => {
+    thumbModalEl.classList.remove('show');
+  });
 
-    if (!file) return showToast('ファイルを選択してください。', true);
-    if (!password) return showToast('パスワードを入力してください。', true);
+  bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル' });
+  bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル' });
+  bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル' });
+  bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル' });
 
-    showToast('処理中...');
-    try {
-      const bytes = await readFileAsArrayBuffer(file);
-      const pdf = await PDFDocument.load(bytes, { password: password });
-      const pdfBytes = await pdf.save();
-      const originalName = file.name.replace(/\.[^/.]+$/, "");
-      downloadPDF(pdfBytes, `${originalName}_unlocked.pdf`);
-    } catch (e) {
-      if (e.message.includes('password')) {
-        showToast('パスワードが間違っているか、解除できない形式です。', true);
-      } else {
-        showToast('エラーが発生しました。', true);
-      }
-    }
-  }
-
-  // --- 2. 結合 ---
+  // --- 1. 結合 ---
   async function handleMerge() {
     if (mergeFilesState.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
     
@@ -582,7 +708,7 @@
     }
   }
 
-  // --- 3. 抽出 ---
+  // --- 2. 抽出 ---
   async function handleExtract() {
     const file = document.getElementById('extract-file').files[0];
     const start = parseInt(document.getElementById('extract-start').value);
@@ -611,7 +737,7 @@
     }
   }
 
-  // --- 4. 追加 ---
+  // --- 3. 追加 ---
   async function handleInsert() {
     const baseFile = document.getElementById('insert-base-file').files[0];
     const addFile = document.getElementById('insert-add-file').files[0];
@@ -643,7 +769,7 @@
     }
   }
 
-  // --- 5. 削除 ---
+  // --- 4. 削除 ---
   async function handleDelete() {
     const file = document.getElementById('delete-file').files[0];
     const pageNum = parseInt(document.getElementById('delete-page').value);
