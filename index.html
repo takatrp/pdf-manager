@@ -150,6 +150,20 @@
     font-size:11px;
     color:#66808a;
   }
+  .single-page-actions {
+    display:flex;
+    gap:6px;
+  }
+  .single-page-btn {
+    border:1px solid #ccdce0;
+    border-radius:8px;
+    background:#fff;
+    color:#35535d;
+    font-size:10px;
+    font-weight:800;
+    padding:4px 6px;
+    cursor:pointer;
+  }
   .single-page-item.selected .thumb-wrap {
     border:2px solid #578899;
     box-shadow:0 0 0 2px rgba(87,136,153,.2);
@@ -524,7 +538,7 @@
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
     ｜ <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">CC BY-NC-SA 4.0</a>
     ｜ <a href="/tool-portal/terms.html" target="_blank" rel="noopener">利用条件</a>
-    ｜ <span id="build-rev">r12</span>（<span id="last-updated-date"></span>）
+    ｜ <span id="build-rev">r13</span>（<span id="last-updated-date"></span>）
   </footer>
 </div>
 
@@ -549,7 +563,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r12';
+  const VERSION = 'r13';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -688,7 +702,7 @@
       const updateSelectionNote = () => {
         if (!selectionKey || !selectedPagesState[selectionKey]) return noteText;
         const selectedCount = selectedPagesState[selectionKey].size;
-        return selectedCount ? `${noteText}（選択中: ${selectedCount}ページ）` : `${noteText}（ページをタップして複数選択）`;
+        return selectedCount ? `${noteText}（選択中: ${selectedCount}ページ / 拡大は[拡大]）` : `${noteText}（タップで選択・[拡大]で表示）`;
       };
 
       const file = getSelectedSingleFile(inputId);
@@ -834,8 +848,41 @@
         pageLabel.className = 'single-page-number';
         pageLabel.textContent = `${pageNum}ページ目`;
 
-        if (selectionKey && selectedPagesState[selectionKey]?.has(pageNum)) {
-          pageItem.classList.add('selected');
+        const actions = document.createElement('div');
+        actions.className = 'single-page-actions';
+
+        const zoomBtn = document.createElement('button');
+        zoomBtn.className = 'single-page-btn';
+        zoomBtn.type = 'button';
+        zoomBtn.textContent = '拡大';
+        zoomBtn.addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await renderPdfPageToCanvas(pdf, pageNum, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+          thumbModalEl.classList.add('show');
+        });
+
+        actions.appendChild(zoomBtn);
+
+        if (selectionKey) {
+          const selectBtn = document.createElement('button');
+          selectBtn.className = 'single-page-btn';
+          selectBtn.type = 'button';
+          const syncSelectBtn = () => {
+            const selected = selectedPagesState[selectionKey].has(pageNum);
+            selectBtn.textContent = selected ? '選択解除' : '選択';
+          };
+          selectBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleSelectedPage(selectionKey, pageNum);
+            pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
+            syncSelectBtn();
+            onSelectionChange();
+          });
+          actions.appendChild(selectBtn);
+          if (selectedPagesState[selectionKey]?.has(pageNum)) {
+            pageItem.classList.add('selected');
+          }
+          syncSelectBtn();
         }
 
         pageThumb.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -844,10 +891,14 @@
           if (!selectionKey) return;
           toggleSelectedPage(selectionKey, pageNum);
           pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
+          const maybeBtn = actions.querySelector('.single-page-btn:last-child');
+          if (maybeBtn && maybeBtn.textContent !== '拡大') {
+            maybeBtn.textContent = selectedPagesState[selectionKey].has(pageNum) ? '選択解除' : '選択';
+          }
           onSelectionChange();
         });
 
-        pageItem.append(pageThumb, pageLabel);
+        pageItem.append(pageThumb, pageLabel, actions);
         container.appendChild(pageItem);
         await renderPdfPageToCanvas(pdf, pageNum, pageCanvas);
       }
@@ -1017,8 +1068,8 @@
   });
 
   bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル', showAllPages: true, selectionKey: 'extract' });
-  bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル' });
-  bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル' });
+  bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
+  bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
 
   // --- 1. 結合 ---
