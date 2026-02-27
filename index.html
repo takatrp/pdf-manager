@@ -77,10 +77,11 @@
     gap:10px;
   }
   .merge-item {
+    position:relative;
     display:flex;
     align-items:center;
     gap:12px;
-    padding:10px;
+    padding:38px 10px 10px;
     border:1px solid #d9eaed;
     border-radius:12px;
     background:#fff;
@@ -189,9 +190,11 @@
     border-radius:8px;
     background:#f3f8fa;
   }
-  .merge-meta { min-width:0; flex:1; }
+  .merge-meta { min-width:0; flex:1; overflow:hidden; }
   .merge-name {
     margin:0;
+    display:block;
+    max-width:100%;
     font-size:13px;
     line-height:1.35;
     color:#263a40;
@@ -199,14 +202,31 @@
     white-space:nowrap;
     text-overflow:ellipsis;
   }
+  .merge-fullname {
+    margin:8px 0 0;
+    padding:8px;
+    border-radius:8px;
+    background:#f6fbfc;
+    color:#27424a;
+    font-size:12px;
+    line-height:1.4;
+    overflow-wrap:anywhere;
+  }
   .merge-name.expanded {
     white-space:normal;
     word-break:break-all;
   }
-  .merge-order {
-    margin:4px 0 0;
-    font-size:11px;
-    color:#66808a;
+  .merge-order-badge {
+    position:absolute;
+    left:10px;
+    top:10px;
+    margin:0;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#e9f4f7;
+    color:#2d5a67;
+    font-size:13px;
+    font-weight:900;
   }
   .merge-actions {
     display:flex;
@@ -283,6 +303,39 @@
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
   .action-status.error{color:#e74c3c; font-weight:700;}
+  .feature-home {
+    display:grid;
+    gap:10px;
+  }
+  .feature-link-btn {
+    width:100%;
+    text-align:left;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+    color:#27424a;
+    padding:14px 12px;
+    font-size:16px;
+    font-weight:800;
+    cursor:pointer;
+  }
+  .feature-back {
+    margin:8px 0 2px;
+    display:none;
+  }
+  .feature-back.show { display:block; }
+  .feature-back-btn {
+    border:1px solid #ccdce0;
+    border-radius:999px;
+    background:#fff;
+    color:#35535d;
+    font-weight:800;
+    font-size:12px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  .feature-panel { display:none; }
+  .feature-panel.active { display:block; }
 
   /* footer */
   .mk-mini{ margin:24px 4px calc(96px + env(safe-area-inset-bottom)); text-align:center;color:#667; font-size:11px;line-height:1.6; }
@@ -331,8 +384,21 @@
   </header>
   <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
 
+  <div class="feature-back" id="feature-back">
+    <button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button>
+  </div>
 
-  <section class="card">
+  <section class="card feature-panel active" id="feature-home">
+    <div class="label big">使いたい機能を選択してください</div>
+    <div class="feature-home">
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')">📑 1. 結合 (Merge)</button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')">✂️ 2. 分解・抽出 (Extract)</button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')">➕ 3. ページ追加 (Insert)</button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')">🗑️ 4. ページ削除 (Delete)</button>
+    </div>
+  </section>
+
+  <section class="card feature-panel" data-feature="merge">
     <div class="field">
       <div class="label big">📑 1. 結合 (Merge)</div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
@@ -346,7 +412,7 @@
     <button class="btn" onclick="handleMerge()">結合して保存</button>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="extract">
     <div class="field">
       <div class="label big">✂️ 2. 分解・抽出 (Extract)</div>
       <div class="helper">元のPDFから、指定したページ範囲だけを切り出します。</div>
@@ -367,7 +433,7 @@
     <button class="btn" onclick="handleExtract()">抽出して保存</button>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="insert">
     <div class="field">
       <div class="label big">➕ 3. ページ追加 (Insert)</div>
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
@@ -394,7 +460,7 @@
     <button class="btn" onclick="handleInsert()">追加して保存</button>
   </section>
 
-  <section class="card">
+  <section class="card feature-panel" data-feature="delete">
     <div class="field">
       <div class="label big">🗑️ 4. ページ削除 (Delete)</div>
       <div class="helper">指定した不要なページを取り除きます。</div>
@@ -416,7 +482,7 @@
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener">税理士法人松本会計事務所</a>
-    <span class="mk-rev">安心pdfマネージャー rev. r9</span>
+    <span class="mk-rev">安心pdfマネージャー rev. r10</span>
   </footer>
 </div>
 
@@ -453,12 +519,29 @@
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
   const actionStatusEl = document.getElementById('action-status');
+  const featureBackEl = document.getElementById('feature-back');
+  const featureHomeEl = document.getElementById('feature-home');
+  const featurePanels = Array.from(document.querySelectorAll('.feature-panel[data-feature]'));
   const singleFileState = {
     'extract-file': null,
     'insert-base-file': null,
     'insert-add-file': null,
     'delete-file': null,
   };
+
+  function showFeaturePanel(featureName) {
+    featureHomeEl.classList.remove('active');
+    featurePanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.feature === featureName));
+    featureBackEl.classList.add('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function showFeatureHome() {
+    featurePanels.forEach((panel) => panel.classList.remove('active'));
+    featureHomeEl.classList.add('active');
+    featureBackEl.classList.remove('show');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   let pdfjsLibPromise;
 
@@ -724,18 +807,18 @@
       name.className = 'merge-name';
       name.textContent = item.file.name;
       name.title = item.file.name;
-      const order = document.createElement('p');
-      order.className = 'merge-order';
-      order.textContent = `${index + 1}番目に結合されます`;
+      const orderBadge = document.createElement('p');
+      orderBadge.className = 'merge-order-badge';
+      orderBadge.textContent = `${index + 1}番目`;
 
-      meta.append(name, order);
+      meta.append(name);
 
       const actions = document.createElement('div');
       actions.className = 'merge-actions';
 
       const toggleBtn = document.createElement('button');
       toggleBtn.className = 'mini-btn';
-      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全文';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
       toggleBtn.type = 'button';
       toggleBtn.addEventListener('click', () => {
         item.expanded = !item.expanded;
@@ -772,10 +855,16 @@
 
       moveWrap.append(moveUpBtn, moveDownBtn);
 
-      if (item.expanded) name.classList.add('expanded');
+      if (item.expanded) {
+        name.classList.add('expanded');
+        const fullName = document.createElement('p');
+        fullName.className = 'merge-fullname';
+        fullName.textContent = item.file.name;
+        meta.appendChild(fullName);
+      }
 
       actions.append(toggleBtn, removeBtn, moveWrap);
-      row.append(thumbWrap, meta, actions);
+      row.append(orderBadge, thumbWrap, meta, actions);
       mergeListEl.appendChild(row);
       renderPdfThumbnail(item.file, canvas);
     });
