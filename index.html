@@ -585,7 +585,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r17';
+  const VERSION = 'r18';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -1107,11 +1107,21 @@
       name.title = item.file.name;
       const orderBadge = document.createElement('p');
       orderBadge.className = 'merge-order-badge';
-      orderBadge.textContent = `${index + 1}枚目`;
+      orderBadge.textContent = `${index + 1}番目`;
       meta.append(name);
 
       const actions = document.createElement('div');
       actions.className = 'merge-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'mini-btn';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.type = 'button';
+      toggleBtn.addEventListener('click', () => {
+        item.expanded = !item.expanded;
+        renderImage2PdfList();
+      });
+
       const removeBtn = document.createElement('button');
       removeBtn.className = 'mini-btn';
       removeBtn.type = 'button';
@@ -1121,18 +1131,55 @@
         image2pdfFilesState.splice(index, 1);
         renderImage2PdfList();
       });
-      actions.append(removeBtn);
 
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveImage2PdfItem(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === image2pdfFilesState.length - 1;
+      moveDownBtn.addEventListener('click', () => moveImage2PdfItem(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
+
+      if (item.expanded) {
+        name.classList.add('expanded');
+        const fullName = document.createElement('p');
+        fullName.className = 'merge-fullname';
+        fullName.textContent = item.file.name;
+        meta.appendChild(fullName);
+      }
+
+      actions.append(toggleBtn, removeBtn, moveWrap);
       row.append(orderBadge, thumbWrap, meta, actions);
       image2pdfListEl.appendChild(row);
     });
     syncImage2PdfVisibility();
   }
 
+  function moveImage2PdfItem(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= image2pdfFilesState.length) return;
+    const [moved] = image2pdfFilesState.splice(index, 1);
+    image2pdfFilesState.splice(targetIndex, 0, moved);
+    renderImage2PdfList();
+  }
+
   function addFilesToImage2PdfState(fileList) {
     const files = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
     files.forEach((file) => {
-      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file) });
+      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), expanded: false });
     });
     renderImage2PdfList();
   }
