@@ -362,6 +362,11 @@
     gap:8px;
     box-shadow:0 8px 20px rgba(35,80,90,.08);
   }
+  .feature-link-btn.dragover {
+    background:#eef7f8;
+    border-color:#578899;
+    box-shadow:0 8px 20px rgba(35,80,90,.16);
+  }
   .feature-link-btn .feature-icon {
     font-size:30px;
     line-height:1;
@@ -471,11 +476,11 @@
   <section class="card feature-panel active" id="feature-home">
     <div class="label big">使いたい機能を選択してください</div>
     <div class="feature-home">
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-icon">🖼️</span><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></button>
+      <button class="feature-link-btn" data-feature-target="merge" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
+      <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
+      <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
+      <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
+      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-icon">🖼️</span><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></button>
     </div>
   </section>
 
@@ -609,7 +614,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r19';
+  const VERSION = 'r20';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -636,6 +641,7 @@
   const featureBackEl = document.getElementById('feature-back');
   const featureHomeEl = document.getElementById('feature-home');
   const featurePanels = Array.from(document.querySelectorAll('.feature-panel[data-feature]'));
+  const featureLinkButtons = Array.from(document.querySelectorAll('.feature-link-btn[data-feature-target]'));
   const singleFileState = {
     'extract-file': null,
     'insert-base-file': null,
@@ -680,7 +686,7 @@
     if (inputEl && inputEl.files.length > 0) {
       return inputEl.files[0];
     }
-    return null;
+    return singleFileState[inputId] || null;
   }
 
   function showToast(msg, isError = false) {
@@ -726,8 +732,71 @@
     }
   }
 
-  function getSelectedSingleFile(inputId) {
-    return singleFileState[inputId] || document.getElementById(inputId).files[0] || null;
+
+  function setInputFileAndTriggerChange(inputId, file) {
+    const inputEl = document.getElementById(inputId);
+    if (!inputEl || !file) return;
+    setSingleFileToInput(inputEl, file);
+    const changeEvent = new Event('change', { bubbles: true });
+    inputEl.dispatchEvent(changeEvent);
+  }
+
+  function bindFeatureShortcutDrop() {
+    featureLinkButtons.forEach((btn) => {
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        btn.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          btn.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach((eventName) => {
+        btn.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          btn.classList.remove('dragover');
+        });
+      });
+      btn.addEventListener('drop', (e) => {
+        const featureName = btn.dataset.featureTarget;
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (!featureName || !files.length) return;
+
+        showFeaturePanel(featureName);
+
+        if (featureName === 'merge') {
+          addFilesToMergeState(files);
+          return;
+        }
+
+        if (featureName === 'extract') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('extract-file', firstPdf);
+          return;
+        }
+
+        if (featureName === 'insert') {
+          const pdfFiles = files.filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!pdfFiles.length) return showToast('PDFファイルをドロップしてください。', true);
+          const [baseFile, addFile] = pdfFiles;
+          if (baseFile) setInputFileAndTriggerChange('insert-base-file', baseFile);
+          if (addFile) setInputFileAndTriggerChange('insert-add-file', addFile);
+          return;
+        }
+
+        if (featureName === 'delete') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('delete-file', firstPdf);
+          return;
+        }
+
+        if (featureName === 'image2pdf') {
+          const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+          if (!imageFiles.length) return showToast('画像ファイルをドロップしてください。', true);
+          addFilesToImage2PdfState(imageFiles);
+        }
+      });
+    });
   }
 
 
@@ -1276,6 +1345,7 @@
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
+  bindFeatureShortcutDrop();
 
   // --- 1. 結合 ---
   async function handleMerge() {
