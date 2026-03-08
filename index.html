@@ -419,6 +419,30 @@
     .feature-home {
       grid-template-columns:1fr;
     }
+    .merge-item {
+      display:grid;
+      grid-template-columns:72px minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      padding:40px 10px 10px;
+    }
+    .thumb-wrap {
+      width:72px;
+      height:96px;
+    }
+    .merge-meta {
+      width:100%;
+      overflow-wrap:anywhere;
+    }
+    .merge-actions {
+      grid-column:1 / -1;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .merge-move {
+      flex-direction:row;
+    }
   }
 </style>
 </head>
@@ -585,7 +609,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r18';
+  const VERSION = 'r19';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
