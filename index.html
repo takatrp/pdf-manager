@@ -419,6 +419,30 @@
     .feature-home {
       grid-template-columns:1fr;
     }
+    .merge-item {
+      display:grid;
+      grid-template-columns:72px minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      padding:40px 10px 10px;
+    }
+    .thumb-wrap {
+      width:72px;
+      height:96px;
+    }
+    .merge-meta {
+      width:100%;
+      overflow-wrap:anywhere;
+    }
+    .merge-actions {
+      grid-column:1 / -1;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .merge-move {
+      flex-direction:row;
+    }
   }
 </style>
 </head>
@@ -451,6 +475,7 @@
       <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
       <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
       <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
+      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-icon">🖼️</span><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></button>
     </div>
   </section>
 
@@ -539,6 +564,21 @@
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
+  <section class="card feature-panel" data-feature="image2pdf">
+    <div class="field">
+      <div class="label big">🖼️ 5. 画像をPDF化 (Image to PDF)</div>
+      <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
+      <div class="file-box" id="image2pdf-dropzone">
+        <input type="file" id="image2pdf-files" accept="image/*" multiple>
+        <div class="drop-hint">ここに画像をドラッグ＆ドロップして追加できます。</div>
+      </div>
+      <div class="merge-empty" id="image2pdf-empty">画像を1つ以上追加してください。</div>
+      <div class="merge-list" id="image2pdf-list" aria-live="polite"></div>
+    </div>
+    <button class="btn" onclick="handleImageToPdf()">PDF化して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
@@ -569,7 +609,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r16';
+  const VERSION = 'r19';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -584,6 +624,11 @@
   const mergeDropzone = document.getElementById('merge-dropzone');
   const mergeListEl = document.getElementById('merge-list');
   const mergeEmptyEl = document.getElementById('merge-empty');
+  const image2pdfFilesState = [];
+  const image2pdfInput = document.getElementById('image2pdf-files');
+  const image2pdfDropzone = document.getElementById('image2pdf-dropzone');
+  const image2pdfListEl = document.getElementById('image2pdf-list');
+  const image2pdfEmptyEl = document.getElementById('image2pdf-empty');
   const sysToastEl = document.getElementById('sysToast');
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
@@ -934,6 +979,10 @@
     mergeEmptyEl.style.display = mergeFilesState.length ? 'none' : 'block';
   }
 
+  function syncImage2PdfVisibility() {
+    image2pdfEmptyEl.style.display = image2pdfFilesState.length ? 'none' : 'block';
+  }
+
   function renderMergeList() {
     mergeListEl.innerHTML = '';
     mergeFilesState.forEach((item, index) => {
@@ -1056,6 +1105,156 @@
     const [moved] = mergeFilesState.splice(index, 1);
     mergeFilesState.splice(targetIndex, 0, moved);
     renderMergeList();
+  }
+
+  function renderImage2PdfList() {
+    image2pdfListEl.innerHTML = '';
+    image2pdfFilesState.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'merge-item';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap';
+      const img = document.createElement('img');
+      img.alt = `${item.file.name} のプレビュー`;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.src = item.objectUrl;
+      thumbWrap.appendChild(img);
+
+      const meta = document.createElement('div');
+      meta.className = 'merge-meta';
+      const name = document.createElement('p');
+      name.className = 'merge-name';
+      name.textContent = item.file.name;
+      name.title = item.file.name;
+      const orderBadge = document.createElement('p');
+      orderBadge.className = 'merge-order-badge';
+      orderBadge.textContent = `${index + 1}番目`;
+      meta.append(name);
+
+      const actions = document.createElement('div');
+      actions.className = 'merge-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'mini-btn';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.type = 'button';
+      toggleBtn.addEventListener('click', () => {
+        item.expanded = !item.expanded;
+        renderImage2PdfList();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'mini-btn';
+      removeBtn.type = 'button';
+      removeBtn.textContent = '削除';
+      removeBtn.addEventListener('click', () => {
+        URL.revokeObjectURL(item.objectUrl);
+        image2pdfFilesState.splice(index, 1);
+        renderImage2PdfList();
+      });
+
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveImage2PdfItem(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === image2pdfFilesState.length - 1;
+      moveDownBtn.addEventListener('click', () => moveImage2PdfItem(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
+
+      if (item.expanded) {
+        name.classList.add('expanded');
+        const fullName = document.createElement('p');
+        fullName.className = 'merge-fullname';
+        fullName.textContent = item.file.name;
+        meta.appendChild(fullName);
+      }
+
+      actions.append(toggleBtn, removeBtn, moveWrap);
+      row.append(orderBadge, thumbWrap, meta, actions);
+      image2pdfListEl.appendChild(row);
+    });
+    syncImage2PdfVisibility();
+  }
+
+  function moveImage2PdfItem(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= image2pdfFilesState.length) return;
+    const [moved] = image2pdfFilesState.splice(index, 1);
+    image2pdfFilesState.splice(targetIndex, 0, moved);
+    renderImage2PdfList();
+  }
+
+  function addFilesToImage2PdfState(fileList) {
+    const files = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
+    files.forEach((file) => {
+      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), expanded: false });
+    });
+    renderImage2PdfList();
+  }
+
+  image2pdfInput.addEventListener('change', (e) => {
+    addFilesToImage2PdfState(e.target.files);
+    image2pdfInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    image2pdfDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      image2pdfDropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    image2pdfDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      image2pdfDropzone.classList.remove('dragover');
+    });
+  });
+  image2pdfDropzone.addEventListener('drop', (e) => {
+    addFilesToImage2PdfState(e.dataTransfer.files);
+  });
+
+  async function convertImageFileToPngBytes(file) {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (!result) reject(new Error('画像変換に失敗しました。'));
+          else resolve(result);
+        }, 'image/png');
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
   }
 
   thumbModalEl.addEventListener('click', () => {
@@ -1188,6 +1387,29 @@
       downloadPDF(pdfBytes, 'deleted_document.pdf');
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+
+
+  // --- 5. 画像をPDF化 ---
+  async function handleImageToPdf() {
+    if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
+
+    showToast('処理中...');
+    try {
+      const pdf = await PDFDocument.create();
+      for (const { file } of image2pdfFilesState) {
+        const pngBytes = await convertImageFileToPngBytes(file);
+        const embeddedImage = await pdf.embedPng(pngBytes);
+        const { width, height } = embeddedImage.scale(1);
+        const page = pdf.addPage([width, height]);
+        page.drawImage(embeddedImage, { x: 0, y: 0, width, height });
+      }
+
+      const pdfBytes = await pdf.save();
+      downloadPDF(pdfBytes, 'images_to_pdf.pdf');
+    } catch (e) {
+      showToast('エラー: 画像のPDF化に失敗しました。', true);
     }
   }
 </script>
