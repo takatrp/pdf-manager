@@ -315,14 +315,20 @@
 
   /* buttons */
   .btn{
-    background:linear-gradient(180deg,#7aa2b0,#578899);
-    color:#fff;font-weight:900;border:0;width:100%;
-    border-radius:12px;padding:16px 18px;font-size:16px;
-    box-shadow:0 10px 30px rgba(35,80,90,.12);
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    border:0;
+    width:100%;
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:16px;
+    box-shadow:0 4px 12px rgba(35,80,90,.15);
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: background-color .2s ease, transform .1s ease;
     margin-top: 4px;
   }
+  .btn:hover{ background:#4a7585; }
   .btn:active{transform:translateY(1px)}
 
   /* Toast notification */
@@ -337,38 +343,91 @@
   }
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
+  .action-status:empty{display:none;}
   .action-status.error{color:#e74c3c; font-weight:700;}
   .feature-home {
     display:grid;
-    gap:12px;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    grid-template-columns:1fr;
+  }
+  #feature-home.card {
+    box-shadow:none;
+    border:1px solid #e2e8f0;
+    background:#fff;
   }
   .feature-link-btn {
     width:100%;
-    min-height:120px;
-    text-align:center;
-    border:1px solid #d9eaed;
-    border-radius:16px;
-    background:#fff;
+    min-height:90px;
+    text-align:left;
+    border:none;
+    border-radius:12px;
+    background:#f8fcfd;
     color:#27424a;
-    padding:14px 12px;
-    font-size:16px;
-    font-weight:800;
+    padding:16px;
+    font-size:15px;
+    font-weight:700;
     cursor:pointer;
     display:flex;
     flex-direction:column;
-    align-items:center;
+    align-items:flex-start;
     justify-content:center;
     gap:8px;
-    box-shadow:0 8px 20px rgba(35,80,90,.08);
+    box-shadow:none;
+    transition: background-color .2s ease, transform .1s ease;
   }
-  .feature-link-btn .feature-icon {
-    font-size:30px;
+  .feature-link-btn:hover {
+    background:#dbeaf0;
+    transform:translateY(-1px);
+  }
+  .feature-link-btn.dragover {
+    background:#d5e7ee;
+    box-shadow: inset 0 0 0 1px #4f7b8a;
+  }
+  .feature-link-btn .feature-head {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:20px;
     line-height:1;
+    color:#4e7481;
   }
   .feature-link-btn .feature-text {
-    font-size:15px;
+    font-size:16px;
     line-height:1.35;
+    color:#1f3540;
+    font-weight:800;
+  }
+  .feature-link-btn .feature-sub {
+    margin:0;
+    font-size:12px;
+    line-height:1.5;
+    color:#5c7380;
+  }
+  .feature-icon-svg {
+    width:20px;
+    height:20px;
+    stroke:currentColor;
+    stroke-width:1.8;
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    flex:0 0 auto;
+  }
+  .section-title {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-icon-svg {
+    width:18px;
+    height:18px;
+    stroke:currentColor;
+    stroke-width:1.8;
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    color:#4e7481;
+    flex:0 0 auto;
   }
   .feature-back {
     margin:8px 0 2px;
@@ -416,8 +475,29 @@
   .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
 
   @media (max-width: 480px) {
-    .feature-home {
-      grid-template-columns:1fr;
+    .merge-item {
+      display:grid;
+      grid-template-columns:72px minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      padding:40px 10px 10px;
+    }
+    .thumb-wrap {
+      width:72px;
+      height:96px;
+    }
+    .merge-meta {
+      width:100%;
+      overflow-wrap:anywhere;
+    }
+    .merge-actions {
+      grid-column:1 / -1;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .merge-move {
+      flex-direction:row;
     }
   }
 </style>
@@ -438,25 +518,25 @@
       機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
     </div>
   </header>
-  <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
+  <div id="action-status" class="action-status" aria-live="polite"></div>
 
   <div class="feature-back" id="feature-back">
     <button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button>
   </div>
 
   <section class="card feature-panel active" id="feature-home">
-    <div class="label big">使いたい機能を選択してください</div>
     <div class="feature-home">
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
-      <button class="feature-link-btn" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
+      <button class="feature-link-btn" data-feature-target="merge" type="button" onclick="showFeaturePanel('merge')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="feature-text">1. 結合 (Merge)</span></span><span class="feature-sub">複数のPDFを1つにまとめます。</span></button>
+      <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span class="feature-text">2. 分解・抽出 (Extract)</span></span><span class="feature-sub">必要なページだけを切り出します。</span></button>
+      <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
+      <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
+      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
     </div>
   </section>
 
   <section class="card feature-panel" data-feature="merge">
     <div class="field">
-      <div class="label big">📑 1. 結合 (Merge)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span>1. 結合 (Merge)</span></div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
       <div class="file-box" id="merge-dropzone">
         <input type="file" id="merge-files" accept="application/pdf" multiple>
@@ -471,7 +551,7 @@
 
   <section class="card feature-panel" data-feature="extract">
     <div class="field">
-      <div class="label big">✂️ 2. 分解・抽出 (Extract)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span>2. 分解・抽出 (Extract)</span></div>
       <div class="helper">元のPDFから、指定したページ範囲または選択ページだけを切り出します。</div>
       <div class="file-box" id="extract-dropzone">
         <input type="file" id="extract-file" accept="application/pdf">
@@ -493,7 +573,7 @@
 
   <section class="card feature-panel" data-feature="insert">
     <div class="field">
-      <div class="label big">➕ 3. ページ追加 (Insert)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>3. ページ追加 (Insert)</span></div>
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
       <div class="file-box" id="insert-base-dropzone" style="margin-bottom:10px;">
         <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
@@ -521,7 +601,7 @@
 
   <section class="card feature-panel" data-feature="delete">
     <div class="field">
-      <div class="label big">🗑️ 4. ページ削除 (Delete)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span>4. ページ削除 (Delete)</span></div>
       <div class="helper">指定した不要ページ（複数選択可）を取り除きます。</div>
       <div class="file-box" id="delete-dropzone">
         <input type="file" id="delete-file" accept="application/pdf">
@@ -536,6 +616,21 @@
       </div>
     </div>
     <button class="btn" onclick="handleDelete()">削除して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
+  <section class="card feature-panel" data-feature="image2pdf">
+    <div class="field">
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>5. 画像をPDF化 (Image to PDF)</span></div>
+      <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
+      <div class="file-box" id="image2pdf-dropzone">
+        <input type="file" id="image2pdf-files" accept="image/*" multiple>
+        <div class="drop-hint">ここに画像をドラッグ＆ドロップして追加できます。</div>
+      </div>
+      <div class="merge-empty" id="image2pdf-empty">画像を1つ以上追加してください。</div>
+      <div class="merge-list" id="image2pdf-list" aria-live="polite"></div>
+    </div>
+    <button class="btn" onclick="handleImageToPdf()">PDF化して保存</button>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -569,7 +664,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r16';
+  const VERSION = 'r22';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -584,6 +679,11 @@
   const mergeDropzone = document.getElementById('merge-dropzone');
   const mergeListEl = document.getElementById('merge-list');
   const mergeEmptyEl = document.getElementById('merge-empty');
+  const image2pdfFilesState = [];
+  const image2pdfInput = document.getElementById('image2pdf-files');
+  const image2pdfDropzone = document.getElementById('image2pdf-dropzone');
+  const image2pdfListEl = document.getElementById('image2pdf-list');
+  const image2pdfEmptyEl = document.getElementById('image2pdf-empty');
   const sysToastEl = document.getElementById('sysToast');
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
@@ -591,6 +691,7 @@
   const featureBackEl = document.getElementById('feature-back');
   const featureHomeEl = document.getElementById('feature-home');
   const featurePanels = Array.from(document.querySelectorAll('.feature-panel[data-feature]'));
+  const featureLinkButtons = Array.from(document.querySelectorAll('.feature-link-btn[data-feature-target]'));
   const singleFileState = {
     'extract-file': null,
     'insert-base-file': null,
@@ -635,7 +736,7 @@
     if (inputEl && inputEl.files.length > 0) {
       return inputEl.files[0];
     }
-    return null;
+    return singleFileState[inputId] || null;
   }
 
   function showToast(msg, isError = false) {
@@ -681,8 +782,71 @@
     }
   }
 
-  function getSelectedSingleFile(inputId) {
-    return singleFileState[inputId] || document.getElementById(inputId).files[0] || null;
+
+  function setInputFileAndTriggerChange(inputId, file) {
+    const inputEl = document.getElementById(inputId);
+    if (!inputEl || !file) return;
+    setSingleFileToInput(inputEl, file);
+    const changeEvent = new Event('change', { bubbles: true });
+    inputEl.dispatchEvent(changeEvent);
+  }
+
+  function bindFeatureShortcutDrop() {
+    featureLinkButtons.forEach((btn) => {
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        btn.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          btn.classList.add('dragover');
+        });
+      });
+      ['dragleave', 'drop'].forEach((eventName) => {
+        btn.addEventListener(eventName, (e) => {
+          e.preventDefault();
+          btn.classList.remove('dragover');
+        });
+      });
+      btn.addEventListener('drop', (e) => {
+        const featureName = btn.dataset.featureTarget;
+        const files = Array.from(e.dataTransfer?.files || []);
+        if (!featureName || !files.length) return;
+
+        showFeaturePanel(featureName);
+
+        if (featureName === 'merge') {
+          addFilesToMergeState(files);
+          return;
+        }
+
+        if (featureName === 'extract') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('extract-file', firstPdf);
+          return;
+        }
+
+        if (featureName === 'insert') {
+          const pdfFiles = files.filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!pdfFiles.length) return showToast('PDFファイルをドロップしてください。', true);
+          const [baseFile, addFile] = pdfFiles;
+          if (baseFile) setInputFileAndTriggerChange('insert-base-file', baseFile);
+          if (addFile) setInputFileAndTriggerChange('insert-add-file', addFile);
+          return;
+        }
+
+        if (featureName === 'delete') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('delete-file', firstPdf);
+          return;
+        }
+
+        if (featureName === 'image2pdf') {
+          const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+          if (!imageFiles.length) return showToast('画像ファイルをドロップしてください。', true);
+          addFilesToImage2PdfState(imageFiles);
+        }
+      });
+    });
   }
 
 
@@ -934,6 +1098,10 @@
     mergeEmptyEl.style.display = mergeFilesState.length ? 'none' : 'block';
   }
 
+  function syncImage2PdfVisibility() {
+    image2pdfEmptyEl.style.display = image2pdfFilesState.length ? 'none' : 'block';
+  }
+
   function renderMergeList() {
     mergeListEl.innerHTML = '';
     mergeFilesState.forEach((item, index) => {
@@ -1058,6 +1226,156 @@
     renderMergeList();
   }
 
+  function renderImage2PdfList() {
+    image2pdfListEl.innerHTML = '';
+    image2pdfFilesState.forEach((item, index) => {
+      const row = document.createElement('div');
+      row.className = 'merge-item';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap';
+      const img = document.createElement('img');
+      img.alt = `${item.file.name} のプレビュー`;
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.style.objectFit = 'cover';
+      img.src = item.objectUrl;
+      thumbWrap.appendChild(img);
+
+      const meta = document.createElement('div');
+      meta.className = 'merge-meta';
+      const name = document.createElement('p');
+      name.className = 'merge-name';
+      name.textContent = item.file.name;
+      name.title = item.file.name;
+      const orderBadge = document.createElement('p');
+      orderBadge.className = 'merge-order-badge';
+      orderBadge.textContent = `${index + 1}番目`;
+      meta.append(name);
+
+      const actions = document.createElement('div');
+      actions.className = 'merge-actions';
+
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'mini-btn';
+      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.type = 'button';
+      toggleBtn.addEventListener('click', () => {
+        item.expanded = !item.expanded;
+        renderImage2PdfList();
+      });
+
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'mini-btn';
+      removeBtn.type = 'button';
+      removeBtn.textContent = '削除';
+      removeBtn.addEventListener('click', () => {
+        URL.revokeObjectURL(item.objectUrl);
+        image2pdfFilesState.splice(index, 1);
+        renderImage2PdfList();
+      });
+
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveImage2PdfItem(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === image2pdfFilesState.length - 1;
+      moveDownBtn.addEventListener('click', () => moveImage2PdfItem(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
+
+      if (item.expanded) {
+        name.classList.add('expanded');
+        const fullName = document.createElement('p');
+        fullName.className = 'merge-fullname';
+        fullName.textContent = item.file.name;
+        meta.appendChild(fullName);
+      }
+
+      actions.append(toggleBtn, removeBtn, moveWrap);
+      row.append(orderBadge, thumbWrap, meta, actions);
+      image2pdfListEl.appendChild(row);
+    });
+    syncImage2PdfVisibility();
+  }
+
+  function moveImage2PdfItem(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= image2pdfFilesState.length) return;
+    const [moved] = image2pdfFilesState.splice(index, 1);
+    image2pdfFilesState.splice(targetIndex, 0, moved);
+    renderImage2PdfList();
+  }
+
+  function addFilesToImage2PdfState(fileList) {
+    const files = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
+    files.forEach((file) => {
+      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), expanded: false });
+    });
+    renderImage2PdfList();
+  }
+
+  image2pdfInput.addEventListener('change', (e) => {
+    addFilesToImage2PdfState(e.target.files);
+    image2pdfInput.value = '';
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    image2pdfDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      image2pdfDropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    image2pdfDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      image2pdfDropzone.classList.remove('dragover');
+    });
+  });
+  image2pdfDropzone.addEventListener('drop', (e) => {
+    addFilesToImage2PdfState(e.dataTransfer.files);
+  });
+
+  async function convertImageFileToPngBytes(file) {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = image.naturalWidth;
+      canvas.height = image.naturalHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0);
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (!result) reject(new Error('画像変換に失敗しました。'));
+          else resolve(result);
+        }, 'image/png');
+      });
+      return new Uint8Array(await blob.arrayBuffer());
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   thumbModalEl.addEventListener('click', () => {
     thumbModalEl.classList.remove('show');
   });
@@ -1077,6 +1395,7 @@
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
+  bindFeatureShortcutDrop();
 
   // --- 1. 結合 ---
   async function handleMerge() {
@@ -1188,6 +1507,29 @@
       downloadPDF(pdfBytes, 'deleted_document.pdf');
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+
+
+  // --- 5. 画像をPDF化 ---
+  async function handleImageToPdf() {
+    if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
+
+    showToast('処理中...');
+    try {
+      const pdf = await PDFDocument.create();
+      for (const { file } of image2pdfFilesState) {
+        const pngBytes = await convertImageFileToPngBytes(file);
+        const embeddedImage = await pdf.embedPng(pngBytes);
+        const { width, height } = embeddedImage.scale(1);
+        const page = pdf.addPage([width, height]);
+        page.drawImage(embeddedImage, { x: 0, y: 0, width, height });
+      }
+
+      const pdfBytes = await pdf.save();
+      downloadPDF(pdfBytes, 'images_to_pdf.pdf');
+    } catch (e) {
+      showToast('エラー: 画像のPDF化に失敗しました。', true);
     }
   }
 </script>
