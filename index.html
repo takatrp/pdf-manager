@@ -343,6 +343,7 @@
   }
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
   .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
+  .action-status:empty{display:none;}
   .action-status.error{color:#e74c3c; font-weight:700;}
   .feature-home {
     display:grid;
@@ -375,12 +376,12 @@
     transition: background-color .2s ease, transform .1s ease;
   }
   .feature-link-btn:hover {
-    background:#eef7f8;
+    background:#dbeaf0;
     transform:translateY(-1px);
   }
   .feature-link-btn.dragover {
-    background:#e7f2f5;
-    box-shadow: inset 0 0 0 1px #578899;
+    background:#d5e7ee;
+    box-shadow: inset 0 0 0 1px #4f7b8a;
   }
   .feature-link-btn .feature-head {
     display:flex;
@@ -410,6 +411,22 @@
     fill:none;
     stroke-linecap:round;
     stroke-linejoin:round;
+    flex:0 0 auto;
+  }
+  .section-title {
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .section-icon-svg {
+    width:18px;
+    height:18px;
+    stroke:currentColor;
+    stroke-width:1.8;
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    color:#4e7481;
     flex:0 0 auto;
   }
   .feature-back {
@@ -482,30 +499,6 @@
     .merge-move {
       flex-direction:row;
     }
-    .merge-item {
-      display:grid;
-      grid-template-columns:72px minmax(0, 1fr);
-      align-items:start;
-      gap:10px;
-      padding:40px 10px 10px;
-    }
-    .thumb-wrap {
-      width:72px;
-      height:96px;
-    }
-    .merge-meta {
-      width:100%;
-      overflow-wrap:anywhere;
-    }
-    .merge-actions {
-      grid-column:1 / -1;
-      justify-content:flex-start;
-      flex-wrap:wrap;
-      gap:6px;
-    }
-    .merge-move {
-      flex-direction:row;
-    }
   }
 </style>
 </head>
@@ -525,7 +518,7 @@
       機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
     </div>
   </header>
-  <div id="action-status" class="action-status" aria-live="polite">準備完了</div>
+  <div id="action-status" class="action-status" aria-live="polite"></div>
 
   <div class="feature-back" id="feature-back">
     <button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button>
@@ -543,7 +536,7 @@
 
   <section class="card feature-panel" data-feature="merge">
     <div class="field">
-      <div class="label big">📑 1. 結合 (Merge)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span>1. 結合 (Merge)</span></div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
       <div class="file-box" id="merge-dropzone">
         <input type="file" id="merge-files" accept="application/pdf" multiple>
@@ -558,7 +551,7 @@
 
   <section class="card feature-panel" data-feature="extract">
     <div class="field">
-      <div class="label big">✂️ 2. 分解・抽出 (Extract)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span>2. 分解・抽出 (Extract)</span></div>
       <div class="helper">元のPDFから、指定したページ範囲または選択ページだけを切り出します。</div>
       <div class="file-box" id="extract-dropzone">
         <input type="file" id="extract-file" accept="application/pdf">
@@ -580,7 +573,7 @@
 
   <section class="card feature-panel" data-feature="insert">
     <div class="field">
-      <div class="label big">➕ 3. ページ追加 (Insert)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>3. ページ追加 (Insert)</span></div>
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
       <div class="file-box" id="insert-base-dropzone" style="margin-bottom:10px;">
         <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
@@ -608,7 +601,7 @@
 
   <section class="card feature-panel" data-feature="delete">
     <div class="field">
-      <div class="label big">🗑️ 4. ページ削除 (Delete)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span>4. ページ削除 (Delete)</span></div>
       <div class="helper">指定した不要ページ（複数選択可）を取り除きます。</div>
       <div class="file-box" id="delete-dropzone">
         <input type="file" id="delete-file" accept="application/pdf">
@@ -628,7 +621,7 @@
 
   <section class="card feature-panel" data-feature="image2pdf">
     <div class="field">
-      <div class="label big">🖼️ 5. 画像をPDF化 (Image to PDF)</div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>5. 画像をPDF化 (Image to PDF)</span></div>
       <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
       <div class="file-box" id="image2pdf-dropzone">
         <input type="file" id="image2pdf-files" accept="image/*" multiple>
@@ -671,7 +664,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r21';
+  const VERSION = 'r22';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
