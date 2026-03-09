@@ -361,7 +361,7 @@
     text-align:left;
     border:none;
     border-radius:12px;
-    background:#dceaf0;
+    background:#e4eff3;
     color:#27424a;
     padding:16px;
     font-size:15px;
@@ -376,11 +376,11 @@
     transition: background-color .2s ease, transform .1s ease;
   }
   .feature-link-btn:hover {
-    background:#cfe0e8;
+    background:#d8e8ee;
     transform:translateY(-1px);
   }
   .feature-link-btn.dragover {
-    background:#c5dae4;
+    background:#cee1e9;
     box-shadow: inset 0 0 0 1px #4f7b8a;
   }
   .feature-link-btn .feature-head {
@@ -664,7 +664,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r23';
+  const VERSION = 'r24';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -921,6 +921,22 @@
       note.textContent = updateSelectionNote();
       meta.append(name, note);
 
+      const syncInputsDisabledState = () => {
+        if (!selectionKey) return;
+        const hasSelection = selectedPagesState[selectionKey].size > 0;
+        if (selectionKey === 'extract') {
+          const startEl = document.getElementById('extract-start');
+          const endEl = document.getElementById('extract-end');
+          if (startEl) startEl.disabled = hasSelection;
+          if (endEl) endEl.disabled = hasSelection;
+        } else if (selectionKey === 'delete') {
+          const delEl = document.getElementById('delete-page');
+          if (delEl) delEl.disabled = hasSelection;
+        }
+      };
+
+      syncInputsDisabledState();
+
       if (!showAllPages) {
         previewEl.append(thumbWrap, meta);
         await renderPdfThumbnail(file, canvas);
@@ -936,7 +952,13 @@
       const pagesGrid = document.createElement('div');
       pagesGrid.className = 'single-pages-grid';
       previewEl.appendChild(pagesGrid);
-      await renderAllPdfPages(file, pagesGrid, { selectionKey, onSelectionChange: () => { note.textContent = updateSelectionNote(); } });
+      await renderAllPdfPages(file, pagesGrid, {
+        selectionKey,
+        onSelectionChange: () => {
+          note.textContent = updateSelectionNote();
+          syncInputsDisabledState();
+        },
+      });
     };
 
     inputEl.addEventListener('change', () => {
@@ -1525,7 +1547,6 @@
     }
   }
 
-
   // --- 5. 画像をPDF化 ---
   async function handleImageToPdf() {
     if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
@@ -1534,8 +1555,16 @@
     try {
       const pdf = await PDFDocument.create();
       for (const { file } of image2pdfFilesState) {
-        const pngBytes = await convertImageFileToPngBytes(file);
-        const embeddedImage = await pdf.embedPng(pngBytes);
+        let embeddedImage;
+
+        if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+          const jpgBytes = await readFileAsArrayBuffer(file);
+          embeddedImage = await pdf.embedJpg(jpgBytes);
+        } else {
+          const pngBytes = await convertImageFileToPngBytes(file);
+          embeddedImage = await pdf.embedPng(pngBytes);
+        }
+
         const { width, height } = embeddedImage.scale(1);
         const page = pdf.addPage([width, height]);
         page.drawImage(embeddedImage, { x: 0, y: 0, width, height });
