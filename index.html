@@ -515,7 +515,13 @@
       <h1 class="title">セキュアPDFマネージャー</h1>
     </div>
     <div class="subtitle">
-      機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。
+      機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。<br>
+      作成されたファイルは元のファイルを上書きせず、以下の場所に新規保存されます。
+      <ul style="margin: 6px 0 0; padding-left: 20px; line-height: 1.6;">
+        <li><b>Windows / Mac</b>：「ダウンロード」フォルダ</li>
+        <li><b>iOS (iPhone/iPad)</b>：「ファイル」アプリ内の「ダウンロード」</li>
+        <li><b>Android</b>：ファイル管理アプリの「ダウンロード」</li>
+      </ul>
     </div>
   </header>
   <div id="action-status" class="action-status" aria-live="polite"></div>
@@ -664,7 +670,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r25';
+  const VERSION = 'r26';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
