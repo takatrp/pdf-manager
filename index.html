@@ -315,14 +315,20 @@
 
   /* buttons */
   .btn{
-    background:linear-gradient(180deg,#7aa2b0,#578899);
-    color:#fff;font-weight:900;border:0;width:100%;
-    border-radius:12px;padding:16px 18px;font-size:16px;
-    box-shadow:0 10px 30px rgba(35,80,90,.12);
+    background:var(--accent);
+    color:#fff;
+    font-weight:700;
+    border:0;
+    width:100%;
+    border-radius:10px;
+    padding:16px 18px;
+    font-size:16px;
+    box-shadow:0 4px 12px rgba(35,80,90,.15);
     cursor: pointer;
-    transition: transform 0.1s;
+    transition: background-color .2s ease, transform .1s ease;
     margin-top: 4px;
   }
+  .btn:hover{ background:#4a7585; }
   .btn:active{transform:translateY(1px)}
 
   /* Toast notification */
@@ -340,40 +346,71 @@
   .action-status.error{color:#e74c3c; font-weight:700;}
   .feature-home {
     display:grid;
-    gap:12px;
-    grid-template-columns:repeat(2, minmax(0, 1fr));
+    gap:10px;
+    grid-template-columns:1fr;
+  }
+  #feature-home.card {
+    box-shadow:none;
+    border:1px solid #e2e8f0;
+    background:#fff;
   }
   .feature-link-btn {
     width:100%;
-    min-height:120px;
-    text-align:center;
-    border:1px solid #d9eaed;
-    border-radius:16px;
-    background:#fff;
+    min-height:90px;
+    text-align:left;
+    border:none;
+    border-radius:12px;
+    background:#f8fcfd;
     color:#27424a;
-    padding:14px 12px;
-    font-size:16px;
-    font-weight:800;
+    padding:16px;
+    font-size:15px;
+    font-weight:700;
     cursor:pointer;
     display:flex;
     flex-direction:column;
-    align-items:center;
+    align-items:flex-start;
     justify-content:center;
     gap:8px;
-    box-shadow:0 8px 20px rgba(35,80,90,.08);
+    box-shadow:none;
+    transition: background-color .2s ease, transform .1s ease;
+  }
+  .feature-link-btn:hover {
+    background:#eef7f8;
+    transform:translateY(-1px);
   }
   .feature-link-btn.dragover {
-    background:#eef7f8;
-    border-color:#578899;
-    box-shadow:0 8px 20px rgba(35,80,90,.16);
+    background:#e7f2f5;
+    box-shadow: inset 0 0 0 1px #578899;
   }
-  .feature-link-btn .feature-icon {
-    font-size:30px;
+  .feature-link-btn .feature-head {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:20px;
     line-height:1;
+    color:#4e7481;
   }
   .feature-link-btn .feature-text {
-    font-size:15px;
+    font-size:16px;
     line-height:1.35;
+    color:#1f3540;
+    font-weight:800;
+  }
+  .feature-link-btn .feature-sub {
+    margin:0;
+    font-size:12px;
+    line-height:1.5;
+    color:#5c7380;
+  }
+  .feature-icon-svg {
+    width:20px;
+    height:20px;
+    stroke:currentColor;
+    stroke-width:1.8;
+    fill:none;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+    flex:0 0 auto;
   }
   .feature-back {
     margin:8px 0 2px;
@@ -421,8 +458,29 @@
   .mk-nav a.primary{border-color:transparent; background:linear-gradient(135deg, var(--mk-brand) 0%, #7aa5b4 100%); color:#fff;}
 
   @media (max-width: 480px) {
-    .feature-home {
-      grid-template-columns:1fr;
+    .merge-item {
+      display:grid;
+      grid-template-columns:72px minmax(0, 1fr);
+      align-items:start;
+      gap:10px;
+      padding:40px 10px 10px;
+    }
+    .thumb-wrap {
+      width:72px;
+      height:96px;
+    }
+    .merge-meta {
+      width:100%;
+      overflow-wrap:anywhere;
+    }
+    .merge-actions {
+      grid-column:1 / -1;
+      justify-content:flex-start;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .merge-move {
+      flex-direction:row;
     }
     .merge-item {
       display:grid;
@@ -474,13 +532,12 @@
   </div>
 
   <section class="card feature-panel active" id="feature-home">
-    <div class="label big">使いたい機能を選択してください</div>
     <div class="feature-home">
-      <button class="feature-link-btn" data-feature-target="merge" type="button" onclick="showFeaturePanel('merge')"><span class="feature-icon">📑</span><span class="feature-text">1. 結合 (Merge)</span></button>
-      <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-icon">✂️</span><span class="feature-text">2. 分解・抽出 (Extract)</span></button>
-      <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-icon">➕</span><span class="feature-text">3. ページ追加 (Insert)</span></button>
-      <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-icon">🗑️</span><span class="feature-text">4. ページ削除 (Delete)</span></button>
-      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-icon">🖼️</span><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></button>
+      <button class="feature-link-btn" data-feature-target="merge" type="button" onclick="showFeaturePanel('merge')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="feature-text">1. 結合 (Merge)</span></span><span class="feature-sub">複数のPDFを1つにまとめます。</span></button>
+      <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span class="feature-text">2. 分解・抽出 (Extract)</span></span><span class="feature-sub">必要なページだけを切り出します。</span></button>
+      <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
+      <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
+      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
     </div>
   </section>
 
@@ -614,7 +671,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r20';
+  const VERSION = 'r21';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
