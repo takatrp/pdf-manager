@@ -664,7 +664,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r24';
+  const VERSION = 'r25';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -1427,6 +1427,10 @@
   window.addEventListener('unhandledrejection', (event) => {
     showToast(`エラー: ${event.reason?.message || '処理に失敗しました。'}`, true);
   });
+
+  // ブラウザのデフォルトのドラッグ＆ドロップ挙動（ファイルを開いてページ遷移してしまう事故）を無効化
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('drop', (e) => e.preventDefault());
 
   bindDropzoneFileInput({ inputId: 'extract-file', dropzoneId: 'extract-dropzone', previewId: 'extract-preview', noteText: '抽出対象ファイル', showAllPages: true, selectionKey: 'extract' });
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
