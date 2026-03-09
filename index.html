@@ -361,7 +361,7 @@
     text-align:left;
     border:none;
     border-radius:12px;
-    background:#f8fcfd;
+    background:#dceaf0;
     color:#27424a;
     padding:16px;
     font-size:15px;
@@ -376,11 +376,11 @@
     transition: background-color .2s ease, transform .1s ease;
   }
   .feature-link-btn:hover {
-    background:#dbeaf0;
+    background:#cfe0e8;
     transform:translateY(-1px);
   }
   .feature-link-btn.dragover {
-    background:#d5e7ee;
+    background:#c5dae4;
     box-shadow: inset 0 0 0 1px #4f7b8a;
   }
   .feature-link-btn .feature-head {
@@ -664,7 +664,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r22';
+  const VERSION = 'r23';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -761,15 +761,30 @@
     });
   }
 
+  function resolveDownloadFilename(defaultName) {
+    const noExtDefault = defaultName.replace(/\.pdf$/i, '');
+    const userInput = window.prompt('保存ファイル名を入力してください（拡張子 .pdf は不要です）', noExtDefault);
+    if (userInput === null) return null;
+    const trimmed = userInput.trim();
+    const safeBase = (trimmed || noExtDefault).replace(/[\\/:*?"<>|]/g, '_');
+    const base = safeBase || 'document';
+    return base.toLowerCase().endsWith('.pdf') ? base : `${base}.pdf`;
+  }
+
   function downloadPDF(pdfBytes, filename) {
+    const resolvedName = resolveDownloadFilename(filename);
+    if (!resolvedName) {
+      showToast('保存をキャンセルしました。', true);
+      return;
+    }
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = resolvedName;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('処理が完了し、ダウンロードを開始しました。');
+    showToast(`処理が完了し、${resolvedName} を保存しました。`);
   }
 
   function setSingleFileToInput(inputEl, file) {
