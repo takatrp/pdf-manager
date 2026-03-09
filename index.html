@@ -519,7 +519,7 @@
       作成されたファイルは元のファイルを上書きせず、以下の場所に新規保存されます。
       <ul style="margin: 6px 0 0; padding-left: 20px; line-height: 1.6;">
         <li><b>Windows / Mac</b>：「ダウンロード」フォルダ</li>
-        <li><b>iOS (iPhone/iPad)</b>：「ファイル」アプリ内の「ダウンロード」</li>
+        <li><b>iOS (iPhone/iPad)</b>：「ファイル」アプリ内の「ダウンロード」（またはiCloud Drive内）</li>
         <li><b>Android</b>：ファイル管理アプリの「ダウンロード」</li>
       </ul>
     </div>
@@ -670,7 +670,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r26';
+  const VERSION = 'r27';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -788,8 +788,18 @@
     const a = document.createElement('a');
     a.href = url;
     a.download = resolvedName;
+
+    // 【iOS対策】一時的に画面に見えないように追加してからクリックする
+    a.style.display = 'none';
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+
+    // 【iOS対策】すぐにURLを破棄すると失敗することがあるため、少し待つ
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+
     showToast(`処理が完了し、${resolvedName} を保存しました。`);
   }
 
@@ -1391,7 +1401,8 @@
     addFilesToImage2PdfState(e.dataTransfer.files);
   });
 
-  async function convertImageFileToPngBytes(file) {
+  // 【変更】画像の向きを補正しつつ、PNGかJPEGに変換する関数
+  async function convertImageFileToBytes(file) {
     const objectUrl = URL.createObjectURL(file);
     try {
       const image = await new Promise((resolve, reject) => {
@@ -1400,6 +1411,7 @@
         img.onerror = reject;
         img.src = objectUrl;
       });
+
       const canvas = document.createElement('canvas');
       canvas.width = image.naturalWidth;
       canvas.height = image.naturalHeight;
@@ -1407,13 +1419,21 @@
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, 0, 0);
+
+      const isPng = file.type === 'image/png';
+      const mimeType = isPng ? 'image/png' : 'image/jpeg';
+      const quality = isPng ? undefined : 0.85;
+
       const blob = await new Promise((resolve, reject) => {
         canvas.toBlob((result) => {
           if (!result) reject(new Error('画像変換に失敗しました。'));
           else resolve(result);
-        }, 'image/png');
+        }, mimeType, quality);
       });
-      return new Uint8Array(await blob.arrayBuffer());
+      return {
+        bytes: new Uint8Array(await blob.arrayBuffer()),
+        isPng,
+      };
     } finally {
       URL.revokeObjectURL(objectUrl);
     }
@@ -1565,14 +1585,13 @@
     try {
       const pdf = await PDFDocument.create();
       for (const { file } of image2pdfFilesState) {
-        let embeddedImage;
+        const { bytes, isPng } = await convertImageFileToBytes(file);
 
-        if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
-          const jpgBytes = await readFileAsArrayBuffer(file);
-          embeddedImage = await pdf.embedJpg(jpgBytes);
+        let embeddedImage;
+        if (isPng) {
+          embeddedImage = await pdf.embedPng(bytes);
         } else {
-          const pngBytes = await convertImageFileToPngBytes(file);
-          embeddedImage = await pdf.embedPng(pngBytes);
+          embeddedImage = await pdf.embedJpg(bytes);
         }
 
         const { width, height } = embeddedImage.scale(1);
