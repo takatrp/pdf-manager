@@ -378,7 +378,7 @@
   .feature-link-btn:hover {
     background:#d8e8ee;
     transform:translateY(-1px);
-m  }
+  }
   .feature-link-btn.dragover {
     background:#cee1e9;
     box-shadow: inset 0 0 0 1px #4f7b8a;
@@ -428,24 +428,6 @@ m  }
     stroke-linejoin:round;
     color:#4e7481;
     flex:0 0 auto;
-  }
-
-  .annotate-preview-box {
-    margin-top:10px;
-    padding:10px;
-    border:1px solid #d9eaed;
-    border-radius:12px;
-    background:#fff;
-  }
-  .annotate-preview-box canvas {
-    width:100%;
-    touch-action:none;
-    cursor:grab;
-    max-height:62vh;
-    object-fit:contain;
-    border:1px solid #d9eaed;
-    border-radius:8px;
-    background:#f3f8fa;
   }
   .feature-back {
     margin:8px 0 2px;
@@ -555,7 +537,6 @@ m  }
       <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
       <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
       <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
-      <button class="feature-link-btn" data-feature-target="annotate" type="button" onclick="showFeaturePanel('annotate')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 16l9-9 3 3-9 9-4 1z"/></svg><span class="feature-text">6. テキスト・図形挿入 (Annotate)</span></span><span class="feature-sub">PDFに文字や四角形を追記します。</span></button>
     </div>
   </section>
 
@@ -659,65 +640,6 @@ m  }
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
-  <section class="card feature-panel" data-feature="annotate">
-    <div class="field">
-      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M6 16l9-9 3 3-9 9-4 1z"/></svg><span>6. テキスト・図形挿入 (Annotate)</span></div>
-      <div class="helper">PDFにテキストや四角形を追加します（座標は左上基準）。</div>
-      <div class="file-box" id="annotate-dropzone">
-        <input type="file" id="annotate-file" accept="application/pdf">
-        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
-      </div>
-      <div class="single-preview" id="annotate-preview"></div>
-      <div class="annotate-preview-box">
-        <div class="helper" style="margin:0 0 6px;">編集プレビュー（表示ページ）</div>
-        <div class="flex-row" style="margin-bottom:8px;">
-          <input type="number" id="annotate-preview-page" class="input-num" min="1" value="1" placeholder="表示ページ">
-          <select id="annotate-interaction-target" class="input-text" style="max-width:180px;">
-            <option value="text">ドラッグ対象: テキスト</option>
-            <option value="shape">ドラッグ対象: 図形</option>
-          </select>
-          <button class="mini-btn" type="button" onclick="renderAnnotateLivePreview()">更新</button>
-        </div>
-        <div class="single-note" style="margin:0 0 8px;">キャンバス上でドラッグすると位置移動、ホイール/ピンチで拡大・縮小できます。</div>
-        <canvas id="annotate-preview-canvas"></canvas>
-      </div>
-    </div>
-
-    <div class="field">
-      <div class="helper" style="margin-bottom:6px;">テキスト挿入</div>
-      <input type="text" id="annotate-text" class="input-text" placeholder="挿入するテキスト">
-      <div class="flex-row" style="margin-top:8px;">
-        <input type="number" id="annotate-text-page" class="input-num" min="1" value="1" placeholder="ページ">
-        <input type="number" id="annotate-text-x" class="input-num" min="0" value="40" placeholder="X">
-        <input type="number" id="annotate-text-y" class="input-num" min="0" value="60" placeholder="Y">
-      </div>
-      <div class="flex-row" style="margin-top:8px;">
-        <input type="number" id="annotate-text-size" class="input-num" min="6" value="18" placeholder="文字サイズ">
-        <input type="text" id="annotate-text-color" class="input-text" value="#1e2a2d" placeholder="#RRGGBB">
-      </div>
-      <button class="btn" type="button" onclick="handleAnnotateText()">テキストを挿入して保存</button>
-    </div>
-
-    <div class="field">
-      <div class="helper" style="margin-bottom:6px;">四角形挿入</div>
-      <div class="flex-row">
-        <input type="number" id="annotate-shape-page" class="input-num" min="1" value="1" placeholder="ページ">
-        <input type="number" id="annotate-shape-x" class="input-num" min="0" value="40" placeholder="X">
-        <input type="number" id="annotate-shape-y" class="input-num" min="0" value="120" placeholder="Y">
-      </div>
-      <div class="flex-row" style="margin-top:8px;">
-        <input type="number" id="annotate-shape-width" class="input-num" min="1" value="200" placeholder="幅">
-        <input type="number" id="annotate-shape-height" class="input-num" min="1" value="80" placeholder="高さ">
-        <input type="number" id="annotate-shape-border" class="input-num" min="1" value="2" placeholder="線幅">
-      </div>
-      <div class="flex-row" style="margin-top:8px;">
-        <input type="text" id="annotate-shape-color" class="input-text" value="#578899" placeholder="#RRGGBB">
-      </div>
-      <button class="btn" type="button" onclick="handleAnnotateShape()">四角形を挿入して保存</button>
-    </div>
-    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
-  </section>
-
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
@@ -748,7 +670,7 @@ m  }
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r30';
+  const VERSION = 'r27';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -895,7 +817,6 @@ m  }
     }
   }
 
-
   function setInputFileAndTriggerChange(inputId, file) {
     const inputEl = document.getElementById(inputId);
     if (!inputEl || !file) return;
@@ -959,16 +880,9 @@ m  }
           addFilesToImage2PdfState(imageFiles);
           return;
         }
-
-        if (featureName === 'annotate') {
-          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
-          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
-          setInputFileAndTriggerChange('annotate-file', firstPdf);
-        }
       });
     });
   }
-
 
   function getSelectedPages(selectionKey) {
     if (!selectionKey || !selectedPagesState[selectionKey]) return [];
@@ -1129,7 +1043,6 @@ m  }
       drawFallback();
     }
   }
-
 
   async function renderAllPdfPages(file, container, options = {}) {
     const selectionKey = options.selectionKey || null;
@@ -1551,10 +1464,6 @@ m  }
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
-  bindDropzoneFileInput({ inputId: 'annotate-file', dropzoneId: 'annotate-dropzone', previewId: 'annotate-preview', noteText: '編集対象ファイル', showAllPages: true });
-  bindAnnotatePreviewSync();
-  bindAnnotateCanvasInteraction();
-  renderAnnotateLivePreview();
   bindFeatureShortcutDrop();
 
   // --- 1. 結合 ---
@@ -1667,280 +1576,6 @@ m  }
       downloadPDF(pdfBytes, 'deleted_document.pdf');
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
-    }
-  }
-
-  const annotatePreviewState = {
-    pageIndex: 1,
-    scale: 1,
-    dragging: false,
-    dragPointerId: null,
-    dragStartX: 0,
-    dragStartY: 0,
-    startValueX: 0,
-    startValueY: 0,
-    pinchDistance: null,
-    pointers: new Map(),
-  };
-
-  function getAnnotateInteractionTarget() {
-    return annotateInteractionTargetEl?.value === 'shape' ? 'shape' : 'text';
-  }
-
-  function applyAnnotateScaleFactor(factor) {
-    const target = getAnnotateInteractionTarget();
-    if (!Number.isFinite(factor) || factor <= 0) return;
-    if (target === 'text') {
-      const sizeEl = document.getElementById('annotate-text-size');
-      const current = parseFloat(sizeEl?.value || '18');
-      if (sizeEl && !Number.isNaN(current)) sizeEl.value = String(Math.max(6, Math.min(240, current * factor)).toFixed(1));
-    } else {
-      const wEl = document.getElementById('annotate-shape-width');
-      const hEl = document.getElementById('annotate-shape-height');
-      const w = parseFloat(wEl?.value || '200');
-      const h = parseFloat(hEl?.value || '80');
-      if (wEl && !Number.isNaN(w)) wEl.value = String(Math.max(1, Math.min(5000, w * factor)).toFixed(1));
-      if (hEl && !Number.isNaN(h)) hEl.value = String(Math.max(1, Math.min(5000, h * factor)).toFixed(1));
-    }
-    renderAnnotateLivePreview();
-  }
-
-  function bindAnnotateCanvasInteraction() {
-    if (!annotatePreviewCanvas) return;
-
-    annotatePreviewCanvas.addEventListener('pointerdown', (e) => {
-      const target = getAnnotateInteractionTarget();
-      const pageInput = document.getElementById(target === 'text' ? 'annotate-text-page' : 'annotate-shape-page');
-      const selectedPage = parseInt(pageInput?.value || '1', 10);
-      if (selectedPage !== annotatePreviewState.pageIndex) return;
-
-      const xEl = document.getElementById(target === 'text' ? 'annotate-text-x' : 'annotate-shape-x');
-      const yEl = document.getElementById(target === 'text' ? 'annotate-text-y' : 'annotate-shape-y');
-      const currentX = parseFloat(xEl?.value || '0');
-      const currentY = parseFloat(yEl?.value || '0');
-      if (!xEl || !yEl || Number.isNaN(currentX) || Number.isNaN(currentY)) return;
-
-      annotatePreviewState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (annotatePreviewState.pointers.size === 1) {
-        annotatePreviewState.dragging = true;
-        annotatePreviewState.dragPointerId = e.pointerId;
-        annotatePreviewState.dragStartX = e.clientX;
-        annotatePreviewState.dragStartY = e.clientY;
-        annotatePreviewState.startValueX = currentX;
-        annotatePreviewState.startValueY = currentY;
-        annotatePreviewCanvas.style.cursor = 'grabbing';
-      } else if (annotatePreviewState.pointers.size === 2) {
-        const pts = Array.from(annotatePreviewState.pointers.values());
-        annotatePreviewState.pinchDistance = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      }
-      annotatePreviewCanvas.setPointerCapture(e.pointerId);
-      e.preventDefault();
-    });
-
-    annotatePreviewCanvas.addEventListener('pointermove', (e) => {
-      if (!annotatePreviewState.pointers.has(e.pointerId)) return;
-      annotatePreviewState.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
-      if (annotatePreviewState.pointers.size >= 2) {
-        const pts = Array.from(annotatePreviewState.pointers.values());
-        const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-        if (annotatePreviewState.pinchDistance && dist > 0) {
-          const factor = dist / annotatePreviewState.pinchDistance;
-          applyAnnotateScaleFactor(Math.max(0.5, Math.min(2, factor)));
-        }
-        annotatePreviewState.pinchDistance = dist;
-        return;
-      }
-
-      if (!annotatePreviewState.dragging || annotatePreviewState.dragPointerId !== e.pointerId) return;
-      const target = getAnnotateInteractionTarget();
-      const xEl = document.getElementById(target === 'text' ? 'annotate-text-x' : 'annotate-shape-x');
-      const yEl = document.getElementById(target === 'text' ? 'annotate-text-y' : 'annotate-shape-y');
-      if (!xEl || !yEl || !annotatePreviewState.scale) return;
-
-      const dx = (e.clientX - annotatePreviewState.dragStartX) / annotatePreviewState.scale;
-      const dy = (e.clientY - annotatePreviewState.dragStartY) / annotatePreviewState.scale;
-      xEl.value = String(Math.max(0, annotatePreviewState.startValueX + dx).toFixed(1));
-      yEl.value = String(Math.max(0, annotatePreviewState.startValueY + dy).toFixed(1));
-      renderAnnotateLivePreview();
-    });
-
-    const finishPointer = (e) => {
-      annotatePreviewState.pointers.delete(e.pointerId);
-      if (annotatePreviewState.dragPointerId === e.pointerId) {
-        annotatePreviewState.dragging = false;
-        annotatePreviewState.dragPointerId = null;
-        annotatePreviewCanvas.style.cursor = 'grab';
-      }
-      if (annotatePreviewState.pointers.size < 2) annotatePreviewState.pinchDistance = null;
-    };
-    annotatePreviewCanvas.addEventListener('pointerup', finishPointer);
-    annotatePreviewCanvas.addEventListener('pointercancel', finishPointer);
-
-    annotatePreviewCanvas.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      const factor = Math.exp(-e.deltaY * 0.0015);
-      applyAnnotateScaleFactor(Math.max(0.7, Math.min(1.4, factor)));
-    }, { passive: false });
-  }
-
-  async function renderAnnotateLivePreview() {
-    const file = getSelectedSingleFile('annotate-file');
-    if (!annotatePreviewCanvas) return;
-    if (!file) {
-      const ctx = annotatePreviewCanvas.getContext('2d');
-      annotatePreviewCanvas.width = 600;
-      annotatePreviewCanvas.height = 360;
-      ctx.fillStyle = '#f3f8fa';
-      ctx.fillRect(0, 0, annotatePreviewCanvas.width, annotatePreviewCanvas.height);
-      ctx.fillStyle = '#6b7f87';
-      ctx.font = '14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('PDFを選択すると編集プレビューを表示します', annotatePreviewCanvas.width / 2, annotatePreviewCanvas.height / 2);
-      return;
-    }
-
-    try {
-      const pdfjsLib = await getPdfJsLib();
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-      const pdf = await loadingTask.promise;
-      const pageNo = Math.max(1, parseInt(annotatePreviewPageInput?.value || '1', 10));
-      const pageIndex = Math.min(pageNo, pdf.numPages);
-      if (annotatePreviewPageInput) annotatePreviewPageInput.value = String(pageIndex);
-
-      const page = await pdf.getPage(pageIndex);
-      await renderPdfPageToCanvas(pdf, pageIndex, annotatePreviewCanvas, { targetWidth: 920, targetHeight: 1200 });
-
-      const viewport = page.getViewport({ scale: 1 });
-      const scale = annotatePreviewCanvas.width / viewport.width;
-      annotatePreviewState.scale = scale;
-      annotatePreviewState.pageIndex = pageIndex;
-      const ctx = annotatePreviewCanvas.getContext('2d');
-
-      const textPage = parseInt(document.getElementById('annotate-text-page')?.value || '1', 10);
-      const text = String(document.getElementById('annotate-text')?.value || '').trim();
-      if (text && textPage === pageIndex) {
-        const x = parseFloat(document.getElementById('annotate-text-x')?.value || '0');
-        const yTop = parseFloat(document.getElementById('annotate-text-y')?.value || '0');
-        const size = parseFloat(document.getElementById('annotate-text-size')?.value || '16');
-        const color = String(document.getElementById('annotate-text-color')?.value || '#1e2a2d');
-        ctx.fillStyle = color;
-        ctx.font = `${Math.max(6, size) * scale}px sans-serif`;
-        ctx.fillText(text, Math.max(0, x) * scale, (Math.max(0, yTop) + Math.max(6, size)) * scale);
-      }
-
-      const shapePage = parseInt(document.getElementById('annotate-shape-page')?.value || '1', 10);
-      if (shapePage === pageIndex) {
-        const x = parseFloat(document.getElementById('annotate-shape-x')?.value || '0');
-        const yTop = parseFloat(document.getElementById('annotate-shape-y')?.value || '0');
-        const width = parseFloat(document.getElementById('annotate-shape-width')?.value || '0');
-        const height = parseFloat(document.getElementById('annotate-shape-height')?.value || '0');
-        const border = parseFloat(document.getElementById('annotate-shape-border')?.value || '1');
-        const color = String(document.getElementById('annotate-shape-color')?.value || '#578899');
-        if ([x, yTop, width, height, border].every((v) => !Number.isNaN(v))) {
-          ctx.strokeStyle = color;
-          ctx.lineWidth = Math.max(1, border) * scale;
-          ctx.strokeRect(Math.max(0, x) * scale, Math.max(0, yTop) * scale, Math.max(1, width) * scale, Math.max(1, height) * scale);
-        }
-      }
-    } catch (e) {
-      const ctx = annotatePreviewCanvas.getContext('2d');
-      annotatePreviewCanvas.width = 600;
-      annotatePreviewCanvas.height = 360;
-      ctx.fillStyle = '#f3f8fa';
-      ctx.fillRect(0, 0, annotatePreviewCanvas.width, annotatePreviewCanvas.height);
-      ctx.fillStyle = '#8a3d3d';
-      ctx.font = '13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('プレビューの描画に失敗しました。', annotatePreviewCanvas.width / 2, annotatePreviewCanvas.height / 2);
-    }
-  }
-
-  function bindAnnotatePreviewSync() {
-    const syncIds = [
-      'annotate-file', 'annotate-preview-page', 'annotate-interaction-target',
-      'annotate-text', 'annotate-text-page', 'annotate-text-x', 'annotate-text-y', 'annotate-text-size', 'annotate-text-color',
-      'annotate-shape-page', 'annotate-shape-x', 'annotate-shape-y', 'annotate-shape-width', 'annotate-shape-height', 'annotate-shape-border', 'annotate-shape-color',
-    ];
-    syncIds.forEach((id) => {
-      const el = document.getElementById(id);
-      if (!el) return;
-      const eventName = el.tagName === 'INPUT' && el.type === 'text' ? 'input' : 'change';
-      el.addEventListener(eventName, () => { renderAnnotateLivePreview(); });
-      if (eventName !== 'input') {
-        el.addEventListener('input', () => { renderAnnotateLivePreview(); });
-      }
-    });
-  }
-
-  function parseHexColorToRgb(colorValue, fallback = '#1e2a2d') {
-    const hex = String(colorValue || fallback).trim();
-    const normalized = /^#?[0-9a-fA-F]{6}$/.test(hex) ? hex.replace('#', '') : fallback.replace('#', '');
-    const r = parseInt(normalized.slice(0, 2), 16) / 255;
-    const g = parseInt(normalized.slice(2, 4), 16) / 255;
-    const b = parseInt(normalized.slice(4, 6), 16) / 255;
-    return rgb(r, g, b);
-  }
-
-  async function handleAnnotateText() {
-    const file = getSelectedSingleFile('annotate-file');
-    const text = String(document.getElementById('annotate-text').value || '').trim();
-    const pageNo = parseInt(document.getElementById('annotate-text-page').value, 10);
-    const x = parseFloat(document.getElementById('annotate-text-x').value);
-    const yTop = parseFloat(document.getElementById('annotate-text-y').value);
-    const size = parseFloat(document.getElementById('annotate-text-size').value);
-    const color = parseHexColorToRgb(document.getElementById('annotate-text-color').value, '#1e2a2d');
-
-    if (!file) return showToast('編集するPDFを選択してください。', true);
-    if (!text) return showToast('挿入するテキストを入力してください。', true);
-    if ([pageNo, x, yTop, size].some((v) => Number.isNaN(v))) return showToast('数値入力を確認してください。', true);
-
-    showToast('処理中...');
-    try {
-      const bytes = await readFileAsArrayBuffer(file);
-      const pdf = await PDFDocument.load(bytes);
-      const pageIndex = pageNo - 1;
-      if (pageIndex < 0 || pageIndex >= pdf.getPageCount()) return showToast('ページ番号が範囲外です。', true);
-      const page = pdf.getPage(pageIndex);
-      const pageHeight = page.getHeight();
-      const y = Math.max(0, pageHeight - yTop - size);
-      const font = await pdf.embedFont(StandardFonts.Helvetica);
-      page.drawText(text, { x: Math.max(0, x), y, size: Math.max(6, size), font, color });
-      const out = await pdf.save();
-      downloadPDF(out, 'annotated_text.pdf');
-    } catch (e) {
-      showToast('エラー: テキスト挿入に失敗しました。', true);
-    }
-  }
-
-  async function handleAnnotateShape() {
-    const file = getSelectedSingleFile('annotate-file');
-    const pageNo = parseInt(document.getElementById('annotate-shape-page').value, 10);
-    const x = parseFloat(document.getElementById('annotate-shape-x').value);
-    const yTop = parseFloat(document.getElementById('annotate-shape-y').value);
-    const width = parseFloat(document.getElementById('annotate-shape-width').value);
-    const height = parseFloat(document.getElementById('annotate-shape-height').value);
-    const border = parseFloat(document.getElementById('annotate-shape-border').value);
-    const color = parseHexColorToRgb(document.getElementById('annotate-shape-color').value, '#578899');
-
-    if (!file) return showToast('編集するPDFを選択してください。', true);
-    if ([pageNo, x, yTop, width, height, border].some((v) => Number.isNaN(v))) return showToast('数値入力を確認してください。', true);
-
-    showToast('処理中...');
-    try {
-      const bytes = await readFileAsArrayBuffer(file);
-      const pdf = await PDFDocument.load(bytes);
-      const pageIndex = pageNo - 1;
-      if (pageIndex < 0 || pageIndex >= pdf.getPageCount()) return showToast('ページ番号が範囲外です。', true);
-      const page = pdf.getPage(pageIndex);
-      const pageHeight = page.getHeight();
-      const y = Math.max(0, pageHeight - yTop - height);
-      page.drawRectangle({ x: Math.max(0, x), y, width: Math.max(1, width), height: Math.max(1, height), borderWidth: Math.max(1, border), borderColor: color, color: undefined });
-      const out = await pdf.save();
-      downloadPDF(out, 'annotated_shape.pdf');
-    } catch (e) {
-      showToast('エラー: 図形挿入に失敗しました。', true);
     }
   }
 
