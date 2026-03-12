@@ -679,7 +679,7 @@
   document.getElementById('last-updated-date').textContent = `${yyyy}-${mm}-${dd}`;
   document.getElementById('build-rev').textContent = VERSION;
 
-  const { PDFDocument } = PDFLib;
+  const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const mergeFilesState = [];
   const mergeInput = document.getElementById('merge-files');
   const mergeDropzone = document.getElementById('merge-dropzone');
@@ -693,6 +693,9 @@
   const sysToastEl = document.getElementById('sysToast');
   const thumbModalEl = document.getElementById('thumb-modal');
   const thumbModalCanvas = document.getElementById('thumb-modal-canvas');
+  const annotatePreviewCanvas = document.getElementById('annotate-preview-canvas');
+  const annotatePreviewPageInput = document.getElementById('annotate-preview-page');
+  const annotateInteractionTargetEl = document.getElementById('annotate-interaction-target');
   const actionStatusEl = document.getElementById('action-status');
   const featureBackEl = document.getElementById('feature-back');
   const featureHomeEl = document.getElementById('feature-home');
@@ -703,6 +706,7 @@
     'insert-base-file': null,
     'insert-add-file': null,
     'delete-file': null,
+    'annotate-file': null,
   };
   const selectedPagesState = {
     extract: new Set(),
