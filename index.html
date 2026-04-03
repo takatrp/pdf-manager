@@ -98,6 +98,7 @@
     border:1px solid #d9eaed;
     border-radius:12px;
     background:#fff;
+    overflow:hidden;
   }
   .merge-item.reorderable {
     cursor:grab;
@@ -290,6 +291,11 @@
     display:flex;
     align-items:center;
     gap:8px;
+    margin-left:auto;
+    flex:0 0 auto;
+    justify-content:flex-end;
+    flex-wrap:wrap;
+    max-width:46%;
   }
   .merge-move {
     display:flex;
