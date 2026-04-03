@@ -99,6 +99,29 @@
     border-radius:12px;
     background:#fff;
   }
+  .merge-item.reorderable {
+    cursor:grab;
+    transition:opacity .18s ease, box-shadow .18s ease;
+  }
+  .merge-item.reorderable:active {
+    cursor:grabbing;
+  }
+  .merge-item.dragging {
+    opacity:.5;
+    box-shadow:0 0 0 2px rgba(87,136,153,.3);
+  }
+  .merge-item.drop-before::before,
+  .merge-item.drop-after::after {
+    content:"";
+    position:absolute;
+    left:10px;
+    right:10px;
+    height:3px;
+    border-radius:999px;
+    background:#578899;
+  }
+  .merge-item.drop-before::before { top:-2px; }
+  .merge-item.drop-after::after { bottom:-2px; }
   .thumb-wrap {
     width:88px;
     height:120px;
@@ -712,6 +735,10 @@
     extract: new Set(),
     delete: new Set(),
   };
+  const dragState = {
+    merge: null,
+    image2pdf: null,
+  };
 
   function showFeaturePanel(featureName) {
     featureHomeEl.classList.remove('active');
@@ -1161,7 +1188,7 @@
     mergeListEl.innerHTML = '';
     mergeFilesState.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'merge-item';
+      row.className = 'merge-item reorderable';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'thumb-wrap';
@@ -1237,6 +1264,12 @@
 
       actions.append(toggleBtn, removeBtn, moveWrap);
       row.append(orderBadge, thumbWrap, meta, actions);
+      bindReorderEvents(row, {
+        type: 'merge',
+        index,
+        container: mergeListEl,
+        onMove: moveMergeItemToIndex,
+      });
       mergeListEl.appendChild(row);
       renderPdfThumbnail(item.file, canvas);
     });
@@ -1281,11 +1314,19 @@
     renderMergeList();
   }
 
+  function moveMergeItemToIndex(fromIndex, toIndex) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex >= mergeFilesState.length || toIndex >= mergeFilesState.length) return;
+    const [moved] = mergeFilesState.splice(fromIndex, 1);
+    mergeFilesState.splice(toIndex, 0, moved);
+    renderMergeList();
+  }
+
   function renderImage2PdfList() {
     image2pdfListEl.innerHTML = '';
     image2pdfFilesState.forEach((item, index) => {
       const row = document.createElement('div');
-      row.className = 'merge-item';
+      row.className = 'merge-item reorderable';
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'thumb-wrap';
@@ -1361,6 +1402,12 @@
 
       actions.append(toggleBtn, removeBtn, moveWrap);
       row.append(orderBadge, thumbWrap, meta, actions);
+      bindReorderEvents(row, {
+        type: 'image2pdf',
+        index,
+        container: image2pdfListEl,
+        onMove: moveImage2PdfItemToIndex,
+      });
       image2pdfListEl.appendChild(row);
     });
     syncImage2PdfVisibility();
@@ -1372,6 +1419,66 @@
     const [moved] = image2pdfFilesState.splice(index, 1);
     image2pdfFilesState.splice(targetIndex, 0, moved);
     renderImage2PdfList();
+  }
+
+  function moveImage2PdfItemToIndex(fromIndex, toIndex) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex >= image2pdfFilesState.length || toIndex >= image2pdfFilesState.length) return;
+    const [moved] = image2pdfFilesState.splice(fromIndex, 1);
+    image2pdfFilesState.splice(toIndex, 0, moved);
+    renderImage2PdfList();
+  }
+
+  function clearDropMarkers(container) {
+    if (!container) return;
+    container.querySelectorAll('.merge-item.drop-before, .merge-item.drop-after')
+      .forEach((el) => el.classList.remove('drop-before', 'drop-after'));
+  }
+
+  function bindReorderEvents(row, options) {
+    const { type, index, container, onMove } = options;
+    row.draggable = true;
+
+    row.addEventListener('dragstart', (e) => {
+      dragState[type] = index;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', `${index}`);
+      requestAnimationFrame(() => row.classList.add('dragging'));
+    });
+
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging');
+      dragState[type] = null;
+      clearDropMarkers(container);
+    });
+
+    row.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dragState[type] === null || dragState[type] === index) return;
+      const rect = row.getBoundingClientRect();
+      const dropAfter = e.clientY > rect.top + rect.height / 2;
+      clearDropMarkers(container);
+      row.classList.add(dropAfter ? 'drop-after' : 'drop-before');
+      row.dataset.dropPosition = dropAfter ? 'after' : 'before';
+      e.dataTransfer.dropEffect = 'move';
+    });
+
+    row.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const fromIndex = dragState[type];
+      if (fromIndex === null || fromIndex === index) return;
+      const dropAfter = row.dataset.dropPosition === 'after';
+      let toIndex = dropAfter ? index + 1 : index;
+      if (fromIndex < toIndex) toIndex -= 1;
+      onMove(fromIndex, toIndex);
+      clearDropMarkers(container);
+    });
+
+    row.addEventListener('dragleave', (e) => {
+      if (!row.contains(e.relatedTarget)) {
+        row.classList.remove('drop-before', 'drop-after');
+      }
+    });
   }
 
   function addFilesToImage2PdfState(fileList) {
