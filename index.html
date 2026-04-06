@@ -1077,6 +1077,39 @@
     }
   }
 
+  async function renderImageThumbnail(file, canvas, options = {}) {
+    const targetWidth = options.targetWidth || 88;
+    const targetHeight = options.targetHeight || 120;
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = objectUrl;
+      });
+      const scale = Math.min(targetWidth / image.naturalWidth, targetHeight / image.naturalHeight);
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#f3f8fa';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    } catch (_) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+      ctx.fillStyle = '#eff5f7';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#577783';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('IMG', canvas.width / 2, canvas.height / 2 + 4);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  }
+
   async function renderAllPdfPages(file, container, options = {}) {
     const selectionKey = options.selectionKey || null;
     const onSelectionChange = options.onSelectionChange || (() => {});
@@ -1343,6 +1376,11 @@
       img.style.objectFit = 'cover';
       img.src = item.objectUrl;
       thumbWrap.appendChild(img);
+      thumbWrap.classList.add('zoomable');
+      thumbWrap.addEventListener('click', async () => {
+        await renderImageThumbnail(item.file, thumbModalCanvas, { targetWidth: 1600, targetHeight: 1600 });
+        thumbModalEl.classList.add('show');
+      });
 
       const meta = document.createElement('div');
       meta.className = 'merge-meta';
