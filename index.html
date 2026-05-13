@@ -19,10 +19,15 @@
   html,body{height:100%}
   body{
     margin:0;
-    font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",Segoe UI,Roboto,Arial,sans-serif;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI","Meiryo","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",Roboto,Arial,sans-serif;
     background:var(--bg);
     color:var(--ink);
     padding-bottom: calc(140px + env(safe-area-inset-bottom));
+    font-weight:500;
+    line-height:1.55;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
   }
   .wrap{
     padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) calc(16px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
@@ -37,21 +42,21 @@
   .logo{height:48px;width:auto;object-fit:contain}
   .title{
     flex:1;min-width:0;white-space:nowrap;margin:0;
-    font-weight:800;letter-spacing:.02em;line-height:1.2;
+    font-weight:800;letter-spacing:0;line-height:1.2;
     font-size:clamp(16px,4.6vw,22px);color:#0e2430;
   }
-  .subtitle{color:#5a6a6d;font-size:12px;margin:6px 0 0; line-height: 1.5;}
+  .subtitle{color:#43575c;font-size:12px;margin:6px 0 0; line-height: 1.55;}
 
   /* card & fields */
   .card{
-    background:#fff;border-radius:16px;
-    box-shadow:0 10px 30px rgba(35,80,90,.12);
+    background:#fff;border:1px solid #dbe8ec;border-radius:16px;
+    box-shadow:0 8px 22px rgba(35,80,90,.08);
     padding:20px 16px;margin:16px 0;
   }
   .field{margin:0 0 20px}
   .field:last-child { margin-bottom: 0; }
   .label.big{font-size:16px;font-weight:800;color:#324245; margin-bottom: 8px;}
-  .helper{font-size:12px;color:#6a7a7d;margin:4px 0 8px; line-height: 1.4;}
+  .helper{font-size:12px;color:#4b6066;margin:4px 0 8px; line-height: 1.5;}
 
   /* Inputs (トンマナに合わせたファイル・テキスト入力枠) */
   .file-box {
@@ -80,7 +85,7 @@
   }
   .drop-hint {
     font-size:12px;
-    color:#4f6570;
+    color:#405964;
     margin-top:0;
     text-align:center;
   }
@@ -184,7 +189,7 @@
   .single-page-number {
     margin:0;
     font-size:11px;
-    color:#66808a;
+    color:#4f6872;
   }
   .single-page-actions {
     display:flex;
@@ -222,7 +227,7 @@
   .single-note {
     margin:4px 0 0;
     font-size:11px;
-    color:#6a7a7d;
+    color:#4f6469;
   }
   .thumb-modal {
     position:fixed;
@@ -325,7 +330,7 @@
   .merge-empty {
     margin-top:10px;
     font-size:12px;
-    color:#6a7a7d;
+    color:#4f6469;
   }
   
   .input-text, .input-num {
@@ -430,7 +435,7 @@
     margin:0;
     font-size:12px;
     line-height:1.5;
-    color:#5c7380;
+    color:#435f6b;
   }
   .feature-icon-svg {
     width:20px;
@@ -495,7 +500,7 @@
   .mk-rev{display:block; margin-top:4px; font-weight:700; color:#4f6570;}
 
   /* sticky nav */
-  .mk-nav{position:fixed; left:0; right:0; bottom:0; z-index:999; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:rgba(255,255,255,.92); border-top:1px solid var(--mk-line); backdrop-filter:saturate(180%) blur(10px);}
+  .mk-nav{position:fixed; left:0; right:0; bottom:0; z-index:999; padding:10px 12px calc(10px + env(safe-area-inset-bottom)); background:#fff; border-top:1px solid var(--mk-line); box-shadow:0 -8px 24px rgba(15,23,42,.08);}
   .mk-nav .inner{max-width:1100px; margin:0 auto; display:flex; gap:10px; align-items:center; justify-content:space-between;}
   .mk-nav .left{display:flex; flex-direction:column; gap:2px; min-width:0;}
   .mk-nav .hint{font-size:11px; color:var(--mk-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
