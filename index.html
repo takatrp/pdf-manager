@@ -571,6 +571,7 @@
       <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
       <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
       <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
+      <button class="feature-link-btn" data-feature-target="compress" type="button" onclick="showFeaturePanel('compress')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span class="feature-text">6. 圧縮 (Compress)</span></span><span class="feature-sub">PDFのファイルサイズを圧縮します。</span></button>
     </div>
   </section>
 
@@ -674,6 +675,28 @@
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
+  <section class="card feature-panel" data-feature="compress">
+    <div class="field">
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>6. 圧縮 (Compress)</span></div>
+      <div class="helper">PDFの各ページを画像として再レンダリングし、ファイルサイズを圧縮します。<br>※ 圧縮後はテキストの検索・コピーができなくなります。</div>
+      <div class="file-box" id="compress-dropzone">
+        <input type="file" id="compress-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
+      </div>
+      <div class="single-preview" id="compress-preview"></div>
+    </div>
+    <div class="field">
+      <div class="label" style="font-size:14px;font-weight:700;margin-bottom:10px;">圧縮レベル</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="low"> 低（高画質・小さめ圧縮）</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="medium" checked> 中（バランス）</label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="high"> 高（低画質・最大圧縮）</label>
+      </div>
+    </div>
+    <button class="btn" onclick="handleCompress()">圧縮して保存</button>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
   <footer class="mk-mini">
     © <span id="cpy-year">2025</span>
     <a href="https://www.matsumoto-kaikei.or.jp/" target="_blank" rel="noopener license">税理士法人松本会計事務所</a>
@@ -704,7 +727,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r27';
+  const VERSION = 'r28';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -741,6 +764,7 @@
     'insert-add-file': null,
     'delete-file': null,
     'annotate-file': null,
+    'compress-file': null,
   };
   const selectedPagesState = {
     extract: new Set(),
@@ -916,6 +940,13 @@
           const imageFiles = files.filter((file) => file.type.startsWith('image/'));
           if (!imageFiles.length) return showToast('画像ファイルをドロップしてください。', true);
           addFilesToImage2PdfState(imageFiles);
+          return;
+        }
+
+        if (featureName === 'compress') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('compress-file', firstPdf);
           return;
         }
       });
@@ -1620,6 +1651,7 @@
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
+  bindDropzoneFileInput({ inputId: 'compress-file', dropzoneId: 'compress-dropzone', previewId: 'compress-preview', noteText: '圧縮対象ファイル' });
   bindFeatureShortcutDrop();
 
   // --- 1. 結合 ---
@@ -1730,6 +1762,52 @@
       deleteTargets.sort((a, b) => b - a).forEach((page) => pdf.removePage(page - 1));
       const pdfBytes = await pdf.save();
       downloadPDF(pdfBytes, 'deleted_document.pdf');
+    } catch (e) {
+      showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    }
+  }
+
+  // --- 6. 圧縮 ---
+  async function handleCompress() {
+    const file = getSelectedSingleFile('compress-file');
+    if (!file) return showToast('ファイルを選択してください。', true);
+
+    const levelEl = document.querySelector('input[name="compress-level"]:checked');
+    const level = levelEl ? levelEl.value : 'medium';
+    const levels = {
+      low:    { scale: 1.0, quality: 0.85 },
+      medium: { scale: 0.85, quality: 0.70 },
+      high:   { scale: 0.65, quality: 0.55 },
+    };
+    const { scale: renderScale, quality } = levels[level];
+
+    showToast('処理中...');
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const srcPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const outPdf = await PDFDocument.create();
+
+      for (let pageNum = 1; pageNum <= srcPdf.numPages; pageNum++) {
+        const page = await srcPdf.getPage(pageNum);
+        const viewport = page.getViewport({ scale: renderScale });
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(viewport.width);
+        canvas.height = Math.round(viewport.height);
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((b) => { if (!b) reject(new Error('画像変換に失敗しました。')); else resolve(b); }, 'image/jpeg', quality);
+        });
+        const jpgImage = await outPdf.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+        const { width, height } = jpgImage.scale(1);
+        const outPage = outPdf.addPage([width, height]);
+        outPage.drawImage(jpgImage, { x: 0, y: 0, width, height });
+      }
+
+      const pdfBytes = await outPdf.save();
+      const basename = file.name.replace(/\.pdf$/i, '');
+      downloadPDF(pdfBytes, `${basename}_compressed.pdf`);
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
     }
