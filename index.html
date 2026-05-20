@@ -1775,9 +1775,9 @@
     const levelEl = document.querySelector('input[name="compress-level"]:checked');
     const level = levelEl ? levelEl.value : 'medium';
     const levels = {
-      low:    { scale: 1.0, quality: 0.85 },
-      medium: { scale: 0.85, quality: 0.70 },
-      high:   { scale: 0.65, quality: 0.55 },
+      low:    { scale: 2.0, quality: 0.90 },
+      medium: { scale: 2.0, quality: 0.75 },
+      high:   { scale: 2.0, quality: 0.60 },
     };
     const { scale: renderScale, quality } = levels[level];
 
