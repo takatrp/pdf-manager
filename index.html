@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#578899" />
 <link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
 <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/heic2any/dist/heic2any.min.js"></script>
 
 <style>
   :root {
@@ -331,6 +332,12 @@
     margin-top:10px;
     font-size:12px;
     color:#4f6469;
+  }
+  .supported-formats {
+    margin:8px 0 0;
+    font-size:12px;
+    color:#405964;
+    text-align:center;
   }
   
   .input-text, .input-num {
@@ -694,8 +701,9 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>5. 画像をPDF化 (Image to PDF)</span></div>
       <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
       <div class="file-box" id="image2pdf-dropzone">
-        <input type="file" id="image2pdf-files" accept="image/*" multiple>
+        <input type="file" id="image2pdf-files" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
         <div class="drop-hint">ここに画像をドラッグ＆ドロップして追加できます。</div>
+        <div class="supported-formats">対応拡張子: JPG / JPEG / PNG / GIF / WebP / HEIC / HEIF</div>
       </div>
       <div class="merge-empty" id="image2pdf-empty">画像を1つ以上追加してください。</div>
       <div class="merge-list" id="image2pdf-list" aria-live="polite"></div>
@@ -762,7 +770,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r28';
+  const VERSION = 'r29';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -772,6 +780,8 @@
   document.getElementById('build-rev').textContent = VERSION;
 
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const SUPPORTED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
+  const HEIC_IMAGE_EXTENSIONS = ['heic', 'heif'];
   const mergeFilesState = [];
   const mergeInput = document.getElementById('merge-files');
   const mergeDropzone = document.getElementById('merge-dropzone');
@@ -809,6 +819,20 @@
     merge: null,
     image2pdf: null,
   };
+
+  function getFileExtension(file) {
+    return (file?.name || '').split('.').pop().toLowerCase();
+  }
+
+  function isHeicImageFile(file) {
+    const ext = getFileExtension(file);
+    return HEIC_IMAGE_EXTENSIONS.includes(ext) || file?.type === 'image/heic' || file?.type === 'image/heif';
+  }
+
+  function isSupportedImageFile(file) {
+    const ext = getFileExtension(file);
+    return file?.type?.startsWith('image/') || SUPPORTED_IMAGE_EXTENSIONS.includes(ext);
+  }
 
   function showFeaturePanel(featureName) {
     featureHomeEl.classList.remove('active');
@@ -972,7 +996,7 @@
         }
 
         if (featureName === 'image2pdf') {
-          const imageFiles = files.filter((file) => file.type.startsWith('image/'));
+          const imageFiles = files.filter(isSupportedImageFile);
           if (!imageFiles.length) return showToast('画像ファイルをドロップしてください。', true);
           addFilesToImage2PdfState(imageFiles);
           return;
@@ -1151,8 +1175,14 @@
   async function renderImageThumbnail(file, canvas, options = {}) {
     const targetWidth = options.targetWidth || 88;
     const targetHeight = options.targetHeight || 120;
-    const objectUrl = URL.createObjectURL(file);
+    let objectUrl;
     try {
+      if (isHeicImageFile(file)) {
+        const blob = await convertHeicFileToJpegBlob(file);
+        objectUrl = URL.createObjectURL(blob);
+      } else {
+        objectUrl = URL.createObjectURL(file);
+      }
       const image = await new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
@@ -1177,7 +1207,7 @@
       ctx.textAlign = 'center';
       ctx.fillText('IMG', canvas.width / 2, canvas.height / 2 + 4);
     } finally {
-      URL.revokeObjectURL(objectUrl);
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
     }
   }
 
@@ -1440,13 +1470,9 @@
 
       const thumbWrap = document.createElement('div');
       thumbWrap.className = 'thumb-wrap';
-      const img = document.createElement('img');
-      img.alt = `${item.file.name} のプレビュー`;
-      img.style.width = '100%';
-      img.style.height = '100%';
-      img.style.objectFit = 'cover';
-      img.src = item.objectUrl;
-      thumbWrap.appendChild(img);
+      const canvas = document.createElement('canvas');
+      canvas.title = `${item.file.name} のプレビュー`;
+      thumbWrap.appendChild(canvas);
       thumbWrap.classList.add('zoomable');
       thumbWrap.addEventListener('click', async () => {
         await renderImageThumbnail(item.file, thumbModalCanvas, { targetWidth: 1600, targetHeight: 1600 });
@@ -1524,6 +1550,7 @@
         onMove: moveImage2PdfItemToIndex,
       });
       image2pdfListEl.appendChild(row);
+      renderImageThumbnail(item.file, canvas);
     });
     syncImage2PdfVisibility();
   }
@@ -1597,7 +1624,7 @@
   }
 
   function addFilesToImage2PdfState(fileList) {
-    const files = Array.from(fileList).filter((file) => file.type.startsWith('image/'));
+    const files = Array.from(fileList).filter(isSupportedImageFile);
     files.forEach((file) => {
       image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), expanded: false });
     });
@@ -1722,8 +1749,29 @@
     showClearedToast();
   }
 
+  async function convertHeicFileToJpegBlob(file) {
+    const converter = window.heic2any || globalThis.heic2any;
+    if (!converter) {
+      throw new Error('HEIC画像の変換ライブラリを読み込めませんでした。');
+    }
+    const converted = await converter({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.9,
+    });
+    return Array.isArray(converted) ? converted[0] : converted;
+  }
+
   // 【変更】画像の向きを補正しつつ、PNGかJPEGに変換する関数
   async function convertImageFileToBytes(file) {
+    if (isHeicImageFile(file)) {
+      const blob = await convertHeicFileToJpegBlob(file);
+      return {
+        bytes: new Uint8Array(await blob.arrayBuffer()),
+        isPng: false,
+      };
+    }
+
     const objectUrl = URL.createObjectURL(file);
     try {
       const image = await new Promise((resolve, reject) => {
