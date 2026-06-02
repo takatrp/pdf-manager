@@ -364,6 +364,23 @@
   }
   .btn:hover{ background:#4a7585; }
   .btn:active{transform:translateY(1px)}
+  .button-row {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .button-row .btn {
+    margin-top:0;
+  }
+  .btn.secondary {
+    background:#fff;
+    color:#35535d;
+    border:1px solid #ccdce0;
+    box-shadow:none;
+  }
+  .btn.secondary:hover {
+    background:#f3f8fa;
+  }
 
   /* Toast notification */
   .sys-toast{
@@ -586,7 +603,10 @@
       <div class="merge-empty" id="merge-empty">ファイルを2つ以上追加すると結合できます。</div>
       <div class="merge-list" id="merge-list" aria-live="polite"></div>
     </div>
-    <button class="btn" onclick="handleMerge()">結合して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleMerge()">結合して保存</button>
+      <button class="btn secondary" type="button" onclick="clearMerge()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -608,7 +628,10 @@
         <span>ページ</span>
       </div>
     </div>
-    <button class="btn" onclick="handleExtract()">抽出して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleExtract()">抽出して保存</button>
+      <button class="btn secondary" type="button" onclick="clearExtract()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -636,7 +659,10 @@
         <span>ページ目として</span>
       </div>
     </div>
-    <button class="btn" onclick="handleInsert()">追加して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleInsert()">追加して保存</button>
+      <button class="btn secondary" type="button" onclick="clearInsert()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -656,7 +682,10 @@
         <input type="number" id="delete-page" class="input-num" min="1" value="1" style="max-width: 100px;">
       </div>
     </div>
-    <button class="btn" onclick="handleDelete()">削除して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleDelete()">削除して保存</button>
+      <button class="btn secondary" type="button" onclick="clearDelete()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -671,7 +700,10 @@
       <div class="merge-empty" id="image2pdf-empty">画像を1つ以上追加してください。</div>
       <div class="merge-list" id="image2pdf-list" aria-live="polite"></div>
     </div>
-    <button class="btn" onclick="handleImageToPdf()">PDF化して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleImageToPdf()">PDF化して保存</button>
+      <button class="btn secondary" type="button" onclick="clearImageToPdf()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -693,7 +725,10 @@
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="high"> 高（低画質・最大圧縮）</label>
       </div>
     </div>
-    <button class="btn" onclick="handleCompress()">圧縮して保存</button>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleCompress()">圧縮して保存</button>
+      <button class="btn secondary" type="button" onclick="clearCompress()">クリア</button>
+    </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
@@ -1589,6 +1624,103 @@
   image2pdfDropzone.addEventListener('drop', (e) => {
     addFilesToImage2PdfState(e.dataTransfer.files);
   });
+
+  function resetSingleFeature({ inputIds = [], previewIds = [], selectionKeys = [], numericDefaults = {} }) {
+    inputIds.forEach((inputId) => {
+      const inputEl = document.getElementById(inputId);
+      if (inputEl) inputEl.value = '';
+      if (Object.prototype.hasOwnProperty.call(singleFileState, inputId)) {
+        singleFileState[inputId] = null;
+      }
+    });
+
+    previewIds.forEach((previewId) => {
+      const previewEl = document.getElementById(previewId);
+      if (!previewEl) return;
+      previewEl.classList.remove('show', 'multi-pages');
+      previewEl.innerHTML = '';
+    });
+
+    selectionKeys.forEach((selectionKey) => {
+      if (selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+    });
+
+    Object.entries(numericDefaults).forEach(([inputId, value]) => {
+      const inputEl = document.getElementById(inputId);
+      if (!inputEl) return;
+      inputEl.value = value;
+      inputEl.disabled = false;
+    });
+
+    thumbModalEl.classList.remove('show');
+    actionStatusEl.textContent = '';
+    actionStatusEl.classList.remove('error');
+  }
+
+  function showClearedToast() {
+    showToast('クリアしました。');
+  }
+
+  function clearMerge() {
+    mergeFilesState.length = 0;
+    mergeInput.value = '';
+    dragState.merge = null;
+    clearDropMarkers(mergeListEl);
+    renderMergeList();
+    showClearedToast();
+  }
+
+  function clearExtract() {
+    resetSingleFeature({
+      inputIds: ['extract-file'],
+      previewIds: ['extract-preview'],
+      selectionKeys: ['extract'],
+      numericDefaults: { 'extract-start': '1', 'extract-end': '1' },
+    });
+    showClearedToast();
+  }
+
+  function clearInsert() {
+    resetSingleFeature({
+      inputIds: ['insert-base-file', 'insert-add-file'],
+      previewIds: ['insert-base-preview', 'insert-add-preview'],
+      numericDefaults: { 'insert-position': '2' },
+    });
+    showClearedToast();
+  }
+
+  function clearDelete() {
+    resetSingleFeature({
+      inputIds: ['delete-file'],
+      previewIds: ['delete-preview'],
+      selectionKeys: ['delete'],
+      numericDefaults: { 'delete-page': '1' },
+    });
+    showClearedToast();
+  }
+
+  function clearImageToPdf() {
+    image2pdfFilesState.forEach((item) => URL.revokeObjectURL(item.objectUrl));
+    image2pdfFilesState.length = 0;
+    image2pdfInput.value = '';
+    dragState.image2pdf = null;
+    clearDropMarkers(image2pdfListEl);
+    renderImage2PdfList();
+    thumbModalEl.classList.remove('show');
+    actionStatusEl.textContent = '';
+    actionStatusEl.classList.remove('error');
+    showClearedToast();
+  }
+
+  function clearCompress() {
+    resetSingleFeature({
+      inputIds: ['compress-file'],
+      previewIds: ['compress-preview'],
+    });
+    const defaultLevelEl = document.querySelector('input[name="compress-level"][value="medium"]');
+    if (defaultLevelEl) defaultLevelEl.checked = true;
+    showClearedToast();
+  }
 
   // 【変更】画像の向きを補正しつつ、PNGかJPEGに変換する関数
   async function convertImageFileToBytes(file) {
