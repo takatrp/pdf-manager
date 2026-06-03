@@ -793,7 +793,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r31';
+  const VERSION = 'r32';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -953,6 +953,19 @@
     });
   }
 
+  function formatFileSize(bytes) {
+    if (!Number.isFinite(bytes) || bytes < 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = bytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    const digits = size >= 10 || unitIndex === 0 ? 0 : 1;
+    return `${size.toFixed(digits)} ${units[unitIndex]}`;
+  }
+
   function resolveDownloadFilename(defaultName) {
     const noExtDefault = defaultName.replace(/\.pdf$/i, '');
     const userInput = window.prompt('保存ファイル名を入力してください（拡張子 .pdf は不要です）', noExtDefault);
@@ -967,7 +980,7 @@
     const resolvedName = resolveDownloadFilename(filename);
     if (!resolvedName) {
       showToast('保存をキャンセルしました。', true);
-      return;
+      return false;
     }
     const blob = new Blob([pdfBytes], { type: 'application/pdf' });
     const url = URL.createObjectURL(blob);
@@ -987,6 +1000,7 @@
     }, 1000);
 
     showToast(`処理が完了し、${resolvedName} を保存しました。`);
+    return true;
   }
 
   function setSingleFileToInput(inputEl, file) {
@@ -2031,6 +2045,55 @@
     showClearedToast();
   }
 
+  function getCompressionAttempts(level) {
+    const attempts = {
+      low: [
+        { scale: 2.0, quality: 0.90 },
+        { scale: 1.6, quality: 0.82 },
+      ],
+      medium: [
+        { scale: 2.0, quality: 0.75 },
+        { scale: 1.5, quality: 0.68 },
+        { scale: 1.2, quality: 0.62 },
+      ],
+      high: [
+        { scale: 2.0, quality: 0.60 },
+        { scale: 1.4, quality: 0.55 },
+        { scale: 1.0, quality: 0.48 },
+      ],
+    };
+    return attempts[level] || attempts.medium;
+  }
+
+  async function buildCompressedPdf(srcPdf, settings) {
+    const outPdf = await PDFDocument.create();
+
+    for (let pageNum = 1; pageNum <= srcPdf.numPages; pageNum++) {
+      const page = await srcPdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: settings.scale });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(viewport.width));
+      canvas.height = Math.max(1, Math.round(viewport.height));
+      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+
+      const blob = await new Promise((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (!b) reject(new Error('画像変換に失敗しました。'));
+          else resolve(b);
+        }, 'image/jpeg', settings.quality);
+      });
+      const jpgImage = await outPdf.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+      const { width, height } = jpgImage.scale(1);
+      const outPage = outPdf.addPage([width, height]);
+      outPage.drawImage(jpgImage, { x: 0, y: 0, width, height });
+      canvas.width = 1;
+      canvas.height = 1;
+      if (page.cleanup) page.cleanup();
+    }
+
+    return outPdf.save();
+  }
+
   async function convertHeicFileToJpegBlob(file) {
     const converter = await waitForHeicConverter();
     const converted = await converter({
@@ -2233,42 +2296,39 @@
 
     const levelEl = document.querySelector('input[name="compress-level"]:checked');
     const level = levelEl ? levelEl.value : 'medium';
-    const levels = {
-      low:    { scale: 2.0, quality: 0.90 },
-      medium: { scale: 2.0, quality: 0.75 },
-      high:   { scale: 2.0, quality: 0.60 },
-    };
-    const { scale: renderScale, quality } = levels[level];
+    const attempts = getCompressionAttempts(level);
 
     showToast('処理中...');
+    let srcPdf = null;
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      const srcPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const outPdf = await PDFDocument.create();
+      srcPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let bestResult = null;
 
-      for (let pageNum = 1; pageNum <= srcPdf.numPages; pageNum++) {
-        const page = await srcPdf.getPage(pageNum);
-        const viewport = page.getViewport({ scale: renderScale });
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(viewport.width);
-        canvas.height = Math.round(viewport.height);
-        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
-
-        const blob = await new Promise((resolve, reject) => {
-          canvas.toBlob((b) => { if (!b) reject(new Error('画像変換に失敗しました。')); else resolve(b); }, 'image/jpeg', quality);
-        });
-        const jpgImage = await outPdf.embedJpg(new Uint8Array(await blob.arrayBuffer()));
-        const { width, height } = jpgImage.scale(1);
-        const outPage = outPdf.addPage([width, height]);
-        outPage.drawImage(jpgImage, { x: 0, y: 0, width, height });
+      for (let i = 0; i < attempts.length; i++) {
+        const settings = attempts[i];
+        if (i > 0) {
+          showToast('圧縮後の容量が大きいため、より強い設定で再試行しています...');
+        }
+        const pdfBytes = await buildCompressedPdf(srcPdf, settings);
+        if (!bestResult || pdfBytes.length < bestResult.pdfBytes.length) {
+          bestResult = { pdfBytes, settings };
+        }
+        if (pdfBytes.length < file.size) {
+          const basename = file.name.replace(/\.pdf$/i, '');
+          const didSave = downloadPDF(pdfBytes, `${basename}_compressed.pdf`);
+          if (didSave) showToast(`圧縮しました: ${formatFileSize(file.size)} → ${formatFileSize(pdfBytes.length)}`);
+          return;
+        }
       }
 
-      const pdfBytes = await outPdf.save();
-      const basename = file.name.replace(/\.pdf$/i, '');
-      downloadPDF(pdfBytes, `${basename}_compressed.pdf`);
+      const bestSize = bestResult ? formatFileSize(bestResult.pdfBytes.length) : '不明';
+      showToast(`圧縮後の方が大きくなるため保存しませんでした（元: ${formatFileSize(file.size)} / 最小候補: ${bestSize}）。`, true);
     } catch (e) {
       showToast('エラー: ファイルが保護されていないか確認してください。', true);
+    } finally {
+      if (srcPdf?.destroy) srcPdf.destroy();
     }
   }
 
