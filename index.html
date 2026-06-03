@@ -401,12 +401,70 @@
     box-shadow:0 12px 30px rgba(20,40,50,.12); font-size:14px; font-weight:900;
     color:#1e2a2d; opacity:0; pointer-events:none;
     transition:.18s transform,.18s opacity;
-    max-width:min(92vw,560px); white-space:nowrap;
+    max-width:min(92vw,560px); white-space:normal; line-height:1.45; text-align:center;
   }
   .sys-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
-  .action-status{margin:8px 6px 0; font-size:12px; color:#4f6570;}
+  .sys-toast.busy {
+    padding-left:46px;
+  }
+  .sys-toast.busy::before,
+  .action-status.busy::before {
+    content:"";
+    width:16px;
+    height:16px;
+    border:3px solid rgba(87,136,153,.22);
+    border-top-color:#578899;
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+  }
+  .sys-toast.busy::before {
+    position:absolute;
+    left:18px;
+    top:50%;
+    margin-top:-8px;
+  }
+  .action-status{
+    margin:10px 0 0;
+    padding:12px 14px;
+    border:1px solid #d9eaed;
+    border-radius:12px;
+    background:#fff;
+    color:#334e57;
+    font-size:13px;
+    font-weight:800;
+    box-shadow:0 8px 20px rgba(20,40,50,.08);
+  }
   .action-status:empty{display:none;}
-  .action-status.error{color:#e74c3c; font-weight:700;}
+  .action-status.error{
+    color:#b42318;
+    border-color:#f2b8ae;
+    background:#fff7f5;
+  }
+  .action-status.busy {
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    color:#243f48;
+    border-color:#9ec5d0;
+    background:#eef8fa;
+    overflow:hidden;
+  }
+  .action-status.busy::after {
+    content:"";
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:0;
+    height:3px;
+    background:linear-gradient(90deg, transparent 0%, #578899 45%, transparent 90%);
+    animation:statusBar 1.25s ease-in-out infinite;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes statusBar {
+    0% { transform:translateX(-100%); }
+    100% { transform:translateX(100%); }
+  }
   .feature-home {
     display:grid;
     gap:10px;
@@ -793,7 +851,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r32';
+  const VERSION = 'r33';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -931,17 +989,25 @@
     return singleFileState[inputId] || null;
   }
 
-  function showToast(msg, isError = false) {
+  function showToast(msg, isError = false, isBusy = false) {
     sysToastEl.textContent = msg;
     sysToastEl.style.color = isError ? '#e74c3c' : '#1e2a2d';
     sysToastEl.style.borderColor = isError ? '#e74c3c' : 'rgba(87,136,153,.35)';
     actionStatusEl.textContent = msg;
     actionStatusEl.classList.toggle('error', isError);
+    actionStatusEl.classList.toggle('busy', isBusy);
+    sysToastEl.classList.toggle('busy', isBusy);
     sysToastEl.classList.add('show');
     clearTimeout(showToast._timer);
-    showToast._timer = setTimeout(() => {
-      sysToastEl.classList.remove('show');
-    }, 3000);
+    if (!isBusy) {
+      showToast._timer = setTimeout(() => {
+        sysToastEl.classList.remove('show');
+      }, 3000);
+    }
+  }
+
+  function showProcessingStatus(msg) {
+    showToast(`処理中: ${msg}`, false, true);
   }
 
   async function readFileAsArrayBuffer(file) {
@@ -1671,7 +1737,7 @@
     destroyReorderPreviewPdf();
     clearDropMarkers(reorderListEl);
     renderReorderList();
-    showToast('ページプレビューを読み込んでいます...');
+    showProcessingStatus('ページプレビューを読み込んでいます');
 
     try {
       const pdfjsLib = await getPdfJsLib();
@@ -1962,7 +2028,8 @@
 
     thumbModalEl.classList.remove('show');
     actionStatusEl.textContent = '';
-    actionStatusEl.classList.remove('error');
+    actionStatusEl.classList.remove('error', 'busy');
+    sysToastEl.classList.remove('busy');
   }
 
   function showClearedToast() {
@@ -2018,7 +2085,8 @@
     renderReorderList();
     thumbModalEl.classList.remove('show');
     actionStatusEl.textContent = '';
-    actionStatusEl.classList.remove('error');
+    actionStatusEl.classList.remove('error', 'busy');
+    sysToastEl.classList.remove('busy');
     showClearedToast();
   }
 
@@ -2031,7 +2099,8 @@
     renderImage2PdfList();
     thumbModalEl.classList.remove('show');
     actionStatusEl.textContent = '';
-    actionStatusEl.classList.remove('error');
+    actionStatusEl.classList.remove('error', 'busy');
+    sysToastEl.classList.remove('busy');
     showClearedToast();
   }
 
@@ -2179,8 +2248,8 @@
   // --- 1. 結合 ---
   async function handleMerge() {
     if (mergeFilesState.length < 2) return showToast('2つ以上のファイルを選択してください。', true);
-    
-    showToast('処理中...');
+
+    showProcessingStatus('PDFを結合しています');
     try {
       const mergedPdf = await PDFDocument.create();
       for (let { file } of mergeFilesState) {
@@ -2206,7 +2275,7 @@
     if (!file) return showToast('ファイルを選択してください。', true);
     if (!selectedPages.length && (start > end || start < 1)) return showToast('正しいページ範囲を指定してください。', true);
 
-    showToast('処理中...');
+    showProcessingStatus('ページを抽出しています');
     try {
       const bytes = await readFileAsArrayBuffer(file);
       const sourcePdf = await PDFDocument.load(bytes);
@@ -2239,7 +2308,7 @@
     if (!baseFile || !addFile) return showToast('2つのファイルを選択してください。', true);
     if (position < 1) return showToast('正しいページ位置を指定してください。', true);
 
-    showToast('処理中...');
+    showProcessingStatus('PDFにページを追加しています');
     try {
       const baseBytes = await readFileAsArrayBuffer(baseFile);
       const addBytes = await readFileAsArrayBuffer(addFile);
@@ -2271,7 +2340,7 @@
     if (!file) return showToast('ファイルを選択してください。', true);
     if (!selectedPages.length && pageNum < 1) return showToast('正しいページ番号を指定してください。', true);
 
-    showToast('処理中...');
+    showProcessingStatus('指定ページを削除しています');
     try {
       const bytes = await readFileAsArrayBuffer(file);
       const pdf = await PDFDocument.load(bytes);
@@ -2298,7 +2367,7 @@
     const level = levelEl ? levelEl.value : 'medium';
     const attempts = getCompressionAttempts(level);
 
-    showToast('処理中...');
+    showProcessingStatus('PDFを圧縮しています');
     let srcPdf = null;
     try {
       const pdfjsLib = await getPdfJsLib();
@@ -2309,7 +2378,7 @@
       for (let i = 0; i < attempts.length; i++) {
         const settings = attempts[i];
         if (i > 0) {
-          showToast('圧縮後の容量が大きいため、より強い設定で再試行しています...');
+          showProcessingStatus('圧縮後の容量が大きいため、より強い設定で再試行しています');
         }
         const pdfBytes = await buildCompressedPdf(srcPdf, settings);
         if (!bestResult || pdfBytes.length < bestResult.pdfBytes.length) {
@@ -2338,7 +2407,7 @@
       return showToast('並び替えるPDFを追加してください。', true);
     }
 
-    showToast('処理中...');
+    showProcessingStatus('ページ順を並び替えています');
     try {
       const bytes = await readFileAsArrayBuffer(reorderState.file);
       const sourcePdf = await PDFDocument.load(bytes);
@@ -2362,7 +2431,7 @@
   async function handleImageToPdf() {
     if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
 
-    showToast('処理中...');
+    showProcessingStatus('画像をPDFへ変換しています');
     try {
       const pdf = await PDFDocument.create();
       for (const { file } of image2pdfFilesState) {
