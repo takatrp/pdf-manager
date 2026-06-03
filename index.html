@@ -129,6 +129,10 @@
   }
   .merge-item.drop-before::before { top:-2px; }
   .merge-item.drop-after::after { bottom:-2px; }
+  .merge-item.drop-before,
+  .merge-item.drop-after {
+    border-color:#578899;
+  }
   .thumb-wrap {
     width:88px;
     height:120px;
@@ -594,8 +598,9 @@
       <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span class="feature-text">2. 分解・抽出 (Extract)</span></span><span class="feature-sub">必要なページだけを切り出します。</span></button>
       <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
       <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
-      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">5. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
-      <button class="feature-link-btn" data-feature-target="compress" type="button" onclick="showFeaturePanel('compress')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span class="feature-text">6. 圧縮 (Compress)</span></span><span class="feature-sub">PDFのファイルサイズを圧縮します。</span></button>
+      <button class="feature-link-btn" data-feature-target="reorder" type="button" onclick="showFeaturePanel('reorder')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h11M8 12h11M8 18h11"/><path d="M4 7l2-2 2 2M6 5v14M4 17l2 2 2-2"/></svg><span class="feature-text">5. ページの並び替え (Reorder)</span></span><span class="feature-sub">サムネイルを動かしてページ順を変更します。</span></button>
+      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">6. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
+      <button class="feature-link-btn" data-feature-target="compress" type="button" onclick="showFeaturePanel('compress')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span class="feature-text">7. 圧縮 (Compress)</span></span><span class="feature-sub">PDFのファイルサイズを圧縮します。</span></button>
     </div>
   </section>
 
@@ -696,9 +701,27 @@
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
+  <section class="card feature-panel" data-feature="reorder">
+    <div class="field">
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h11M8 12h11M8 18h11"/><path d="M4 7l2-2 2 2M6 5v14M4 17l2 2 2-2"/></svg><span>5. ページの並び替え (Reorder)</span></div>
+      <div class="helper">PDFのページサムネイルをドラッグ＆ドロップして、ページ順を変更します。</div>
+      <div class="file-box" id="reorder-dropzone">
+        <input type="file" id="reorder-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
+      </div>
+      <div class="merge-empty" id="reorder-empty">並び替えるPDFを追加してください。</div>
+      <div class="merge-list" id="reorder-list" aria-live="polite"></div>
+    </div>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleReorder()">並び替えて保存</button>
+      <button class="btn secondary" type="button" onclick="clearReorder()">クリア</button>
+    </div>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
   <section class="card feature-panel" data-feature="image2pdf">
     <div class="field">
-      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>5. 画像をPDF化 (Image to PDF)</span></div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>6. 画像をPDF化 (Image to PDF)</span></div>
       <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
       <div class="file-box" id="image2pdf-dropzone">
         <input type="file" id="image2pdf-files" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
@@ -717,7 +740,7 @@
 
   <section class="card feature-panel" data-feature="compress">
     <div class="field">
-      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>6. 圧縮 (Compress)</span></div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>7. 圧縮 (Compress)</span></div>
       <div class="helper">PDFの各ページを画像として再レンダリングし、ファイルサイズを圧縮します。<br>※ 圧縮後はテキストの検索・コピーができなくなります。</div>
       <div class="file-box" id="compress-dropzone">
         <input type="file" id="compress-file" accept="application/pdf">
@@ -770,7 +793,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r29';
+  const VERSION = 'r31';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -782,11 +805,16 @@
   const { PDFDocument, StandardFonts, rgb } = PDFLib;
   const SUPPORTED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
   const HEIC_IMAGE_EXTENSIONS = ['heic', 'heif'];
+  let heicConverterPromise = null;
   const mergeFilesState = [];
   const mergeInput = document.getElementById('merge-files');
   const mergeDropzone = document.getElementById('merge-dropzone');
   const mergeListEl = document.getElementById('merge-list');
   const mergeEmptyEl = document.getElementById('merge-empty');
+  const reorderInput = document.getElementById('reorder-file');
+  const reorderDropzone = document.getElementById('reorder-dropzone');
+  const reorderListEl = document.getElementById('reorder-list');
+  const reorderEmptyEl = document.getElementById('reorder-empty');
   const image2pdfFilesState = [];
   const image2pdfInput = document.getElementById('image2pdf-files');
   const image2pdfDropzone = document.getElementById('image2pdf-dropzone');
@@ -817,7 +845,14 @@
   };
   const dragState = {
     merge: null,
+    reorder: null,
     image2pdf: null,
+  };
+  const reorderState = {
+    file: null,
+    pageOrder: [],
+    previewPdf: null,
+    renderToken: 0,
   };
 
   function getFileExtension(file) {
@@ -832,6 +867,32 @@
   function isSupportedImageFile(file) {
     const ext = getFileExtension(file);
     return file?.type?.startsWith('image/') || SUPPORTED_IMAGE_EXTENSIONS.includes(ext);
+  }
+
+  function waitForHeicConverter() {
+    const current = window.heic2any || globalThis.heic2any;
+    if (current) return Promise.resolve(current);
+    if (heicConverterPromise) return heicConverterPromise;
+
+    heicConverterPromise = new Promise((resolve, reject) => {
+      let attempts = 0;
+      const poll = () => {
+        const converter = window.heic2any || globalThis.heic2any;
+        if (converter) {
+          resolve(converter);
+          return;
+        }
+        attempts += 1;
+        if (attempts >= 80) {
+          reject(new Error('HEIC画像の変換ライブラリを読み込めませんでした。'));
+          return;
+        }
+        setTimeout(poll, 100);
+      };
+      poll();
+    });
+
+    return heicConverterPromise;
   }
 
   function showFeaturePanel(featureName) {
@@ -992,6 +1053,13 @@
           const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
           if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
           setInputFileAndTriggerChange('delete-file', firstPdf);
+          return;
+        }
+
+        if (featureName === 'reorder') {
+          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setReorderSourceFile(firstPdf);
           return;
         }
 
@@ -1172,22 +1240,43 @@
     }
   }
 
+  async function getImagePreviewUrl(source) {
+    const item = source?.file ? source : null;
+    const file = item ? item.file : source;
+
+    if (isHeicImageFile(file)) {
+      if (item?.previewUrl) return { url: item.previewUrl, revoke: false };
+      if (!item) {
+        const blob = await convertHeicFileToJpegBlob(file);
+        return { url: URL.createObjectURL(blob), revoke: true };
+      }
+      if (!item.previewPromise) {
+        item.previewPromise = convertHeicFileToJpegBlob(file)
+          .then((blob) => {
+            item.previewUrl = URL.createObjectURL(blob);
+            return item.previewUrl;
+          })
+          .finally(() => {
+            item.previewPromise = null;
+          });
+      }
+      return { url: await item.previewPromise, revoke: false };
+    }
+
+    return { url: item?.objectUrl || URL.createObjectURL(file), revoke: !item };
+  }
+
   async function renderImageThumbnail(file, canvas, options = {}) {
     const targetWidth = options.targetWidth || 88;
     const targetHeight = options.targetHeight || 120;
-    let objectUrl;
+    let preview = null;
     try {
-      if (isHeicImageFile(file)) {
-        const blob = await convertHeicFileToJpegBlob(file);
-        objectUrl = URL.createObjectURL(blob);
-      } else {
-        objectUrl = URL.createObjectURL(file);
-      }
+      preview = await getImagePreviewUrl(file);
       const image = await new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => resolve(img);
         img.onerror = reject;
-        img.src = objectUrl;
+        img.src = preview.url;
       });
       const scale = Math.min(targetWidth / image.naturalWidth, targetHeight / image.naturalHeight);
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -1207,7 +1296,7 @@
       ctx.textAlign = 'center';
       ctx.fillText('IMG', canvas.width / 2, canvas.height / 2 + 4);
     } finally {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      if (preview?.revoke) URL.revokeObjectURL(preview.url);
     }
   }
 
@@ -1318,6 +1407,10 @@
 
   function syncMergeVisibility() {
     mergeEmptyEl.style.display = mergeFilesState.length ? 'none' : 'block';
+  }
+
+  function syncReorderVisibility() {
+    reorderEmptyEl.style.display = reorderState.pageOrder.length ? 'none' : 'block';
   }
 
   function syncImage2PdfVisibility() {
@@ -1462,6 +1555,171 @@
     renderMergeList();
   }
 
+  function renderReorderList() {
+    reorderListEl.innerHTML = '';
+    reorderState.pageOrder.forEach((pageNum, index) => {
+      const row = document.createElement('div');
+      row.className = 'merge-item reorderable';
+
+      const thumbWrap = document.createElement('div');
+      thumbWrap.className = 'thumb-wrap zoomable';
+      const canvas = document.createElement('canvas');
+      canvas.title = `${pageNum}ページ目のプレビュー`;
+      thumbWrap.appendChild(canvas);
+      thumbWrap.addEventListener('click', async () => {
+        if (!reorderState.previewPdf) return;
+        await renderPdfPageToCanvas(reorderState.previewPdf, pageNum, thumbModalCanvas, { targetWidth: 1200, targetHeight: 1600 });
+        thumbModalEl.classList.add('show');
+      });
+
+      const orderBadge = document.createElement('p');
+      orderBadge.className = 'merge-order-badge';
+      orderBadge.textContent = `${index + 1}番目`;
+
+      const meta = document.createElement('div');
+      meta.className = 'merge-meta';
+      const name = document.createElement('p');
+      name.className = 'merge-name';
+      name.textContent = `${pageNum}ページ目`;
+      const note = document.createElement('p');
+      note.className = 'merge-fullname';
+      note.textContent = `元のPDFの${pageNum}ページ`;
+      meta.append(name, note);
+
+      const actions = document.createElement('div');
+      actions.className = 'merge-actions';
+
+      const moveWrap = document.createElement('div');
+      moveWrap.className = 'merge-move';
+
+      const moveUpBtn = document.createElement('button');
+      moveUpBtn.className = 'mini-btn move-btn';
+      moveUpBtn.textContent = '▲';
+      moveUpBtn.type = 'button';
+      moveUpBtn.title = '上に移動';
+      moveUpBtn.disabled = index === 0;
+      moveUpBtn.addEventListener('click', () => moveReorderPage(index, -1));
+
+      const moveDownBtn = document.createElement('button');
+      moveDownBtn.className = 'mini-btn move-btn';
+      moveDownBtn.textContent = '▼';
+      moveDownBtn.type = 'button';
+      moveDownBtn.title = '下に移動';
+      moveDownBtn.disabled = index === reorderState.pageOrder.length - 1;
+      moveDownBtn.addEventListener('click', () => moveReorderPage(index, 1));
+
+      moveWrap.append(moveUpBtn, moveDownBtn);
+      actions.append(moveWrap);
+      row.append(orderBadge, thumbWrap, meta, actions);
+      bindReorderEvents(row, {
+        type: 'reorder',
+        index,
+        container: reorderListEl,
+        onMove: moveReorderPageToIndex,
+      });
+      reorderListEl.appendChild(row);
+
+      if (reorderState.previewPdf) {
+        renderPdfPageToCanvas(reorderState.previewPdf, pageNum, canvas)
+          .catch(() => {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 88;
+            canvas.height = 120;
+            ctx.fillStyle = '#f3f8fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#6b7f86';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${pageNum}P`, canvas.width / 2, canvas.height / 2 + 4);
+          });
+      }
+    });
+    syncReorderVisibility();
+  }
+
+  function destroyReorderPreviewPdf() {
+    if (reorderState.previewPdf?.destroy) {
+      reorderState.previewPdf.destroy();
+    }
+    reorderState.previewPdf = null;
+  }
+
+  async function setReorderSourceFile(file) {
+    if (!file || !(file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'))) {
+      showToast('PDFファイルを選択してください。', true);
+      return;
+    }
+
+    const token = reorderState.renderToken + 1;
+    reorderState.renderToken = token;
+    reorderState.file = file;
+    reorderState.pageOrder = [];
+    destroyReorderPreviewPdf();
+    clearDropMarkers(reorderListEl);
+    renderReorderList();
+    showToast('ページプレビューを読み込んでいます...');
+
+    try {
+      const pdfjsLib = await getPdfJsLib();
+      const arrayBuffer = await readFileAsArrayBuffer(file);
+      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      if (token !== reorderState.renderToken) {
+        if (pdf.destroy) pdf.destroy();
+        return;
+      }
+      reorderState.previewPdf = pdf;
+      reorderState.pageOrder = Array.from({ length: pdf.numPages }, (_, i) => i + 1);
+      renderReorderList();
+      showToast(`${pdf.numPages}ページを読み込みました。サムネイルをドラッグして並び替えできます。`);
+    } catch (e) {
+      if (token !== reorderState.renderToken) return;
+      reorderState.file = null;
+      reorderState.pageOrder = [];
+      destroyReorderPreviewPdf();
+      renderReorderList();
+      showToast('エラー: PDFのページプレビューを読み込めませんでした。', true);
+    }
+  }
+
+  reorderInput.addEventListener('change', (e) => {
+    const file = e.target.files[0] || null;
+    if (file) setReorderSourceFile(file);
+  });
+
+  ['dragenter', 'dragover'].forEach((eventName) => {
+    reorderDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      reorderDropzone.classList.add('dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach((eventName) => {
+    reorderDropzone.addEventListener(eventName, (e) => {
+      e.preventDefault();
+      reorderDropzone.classList.remove('dragover');
+    });
+  });
+  reorderDropzone.addEventListener('drop', (e) => {
+    const file = Array.from(e.dataTransfer.files).find((item) => item.type === 'application/pdf' || item.name.toLowerCase().endsWith('.pdf'));
+    if (file) setReorderSourceFile(file);
+    else showToast('PDFファイルをドロップしてください。', true);
+  });
+
+  function moveReorderPage(index, direction) {
+    const targetIndex = index + direction;
+    if (targetIndex < 0 || targetIndex >= reorderState.pageOrder.length) return;
+    const [moved] = reorderState.pageOrder.splice(index, 1);
+    reorderState.pageOrder.splice(targetIndex, 0, moved);
+    renderReorderList();
+  }
+
+  function moveReorderPageToIndex(fromIndex, toIndex) {
+    if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return;
+    if (fromIndex >= reorderState.pageOrder.length || toIndex >= reorderState.pageOrder.length) return;
+    const [moved] = reorderState.pageOrder.splice(fromIndex, 1);
+    reorderState.pageOrder.splice(toIndex, 0, moved);
+    renderReorderList();
+  }
+
   function renderImage2PdfList() {
     image2pdfListEl.innerHTML = '';
     image2pdfFilesState.forEach((item, index) => {
@@ -1475,7 +1733,7 @@
       thumbWrap.appendChild(canvas);
       thumbWrap.classList.add('zoomable');
       thumbWrap.addEventListener('click', async () => {
-        await renderImageThumbnail(item.file, thumbModalCanvas, { targetWidth: 1600, targetHeight: 1600 });
+        await renderImageThumbnail(item, thumbModalCanvas, { targetWidth: 1600, targetHeight: 1600 });
         thumbModalEl.classList.add('show');
       });
 
@@ -1507,7 +1765,7 @@
       removeBtn.type = 'button';
       removeBtn.textContent = '削除';
       removeBtn.addEventListener('click', () => {
-        URL.revokeObjectURL(item.objectUrl);
+        revokeImage2PdfItemUrls(item);
         image2pdfFilesState.splice(index, 1);
         renderImage2PdfList();
       });
@@ -1550,7 +1808,7 @@
         onMove: moveImage2PdfItemToIndex,
       });
       image2pdfListEl.appendChild(row);
-      renderImageThumbnail(item.file, canvas);
+      renderImageThumbnail(item, canvas);
     });
     syncImage2PdfVisibility();
   }
@@ -1569,6 +1827,15 @@
     const [moved] = image2pdfFilesState.splice(fromIndex, 1);
     image2pdfFilesState.splice(toIndex, 0, moved);
     renderImage2PdfList();
+  }
+
+  function revokeImage2PdfItemUrls(item) {
+    if (!item) return;
+    if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+    if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
+    item.objectUrl = null;
+    item.previewUrl = null;
+    item.previewPromise = null;
   }
 
   function clearDropMarkers(container) {
@@ -1626,7 +1893,7 @@
   function addFilesToImage2PdfState(fileList) {
     const files = Array.from(fileList).filter(isSupportedImageFile);
     files.forEach((file) => {
-      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), expanded: false });
+      image2pdfFilesState.push({ file, objectUrl: URL.createObjectURL(file), previewUrl: null, previewPromise: null, expanded: false });
     });
     renderImage2PdfList();
   }
@@ -1726,8 +1993,23 @@
     showClearedToast();
   }
 
+  function clearReorder() {
+    reorderState.renderToken += 1;
+    reorderState.file = null;
+    reorderState.pageOrder = [];
+    reorderInput.value = '';
+    dragState.reorder = null;
+    destroyReorderPreviewPdf();
+    clearDropMarkers(reorderListEl);
+    renderReorderList();
+    thumbModalEl.classList.remove('show');
+    actionStatusEl.textContent = '';
+    actionStatusEl.classList.remove('error');
+    showClearedToast();
+  }
+
   function clearImageToPdf() {
-    image2pdfFilesState.forEach((item) => URL.revokeObjectURL(item.objectUrl));
+    image2pdfFilesState.forEach(revokeImage2PdfItemUrls);
     image2pdfFilesState.length = 0;
     image2pdfInput.value = '';
     dragState.image2pdf = null;
@@ -1750,10 +2032,7 @@
   }
 
   async function convertHeicFileToJpegBlob(file) {
-    const converter = window.heic2any || globalThis.heic2any;
-    if (!converter) {
-      throw new Error('HEIC画像の変換ライブラリを読み込めませんでした。');
-    }
+    const converter = await waitForHeicConverter();
     const converted = await converter({
       blob: file,
       toType: 'image/jpeg',
@@ -1947,7 +2226,7 @@
     }
   }
 
-  // --- 6. 圧縮 ---
+  // --- 7. 圧縮 ---
   async function handleCompress() {
     const file = getSelectedSingleFile('compress-file');
     if (!file) return showToast('ファイルを選択してください。', true);
@@ -1993,7 +2272,33 @@
     }
   }
 
-  // --- 5. 画像をPDF化 ---
+  // --- 5. ページの並び替え ---
+  async function handleReorder() {
+    if (!reorderState.file || !reorderState.pageOrder.length) {
+      return showToast('並び替えるPDFを追加してください。', true);
+    }
+
+    showToast('処理中...');
+    try {
+      const bytes = await readFileAsArrayBuffer(reorderState.file);
+      const sourcePdf = await PDFDocument.load(bytes);
+      const totalPages = sourcePdf.getPageCount();
+      if (reorderState.pageOrder.some((page) => page < 1 || page > totalPages)) {
+        return showToast(`このPDFは${totalPages}ページまでです。`, true);
+      }
+
+      const outPdf = await PDFDocument.create();
+      const copiedPages = await outPdf.copyPages(sourcePdf, reorderState.pageOrder.map((page) => page - 1));
+      copiedPages.forEach((page) => outPdf.addPage(page));
+      const pdfBytes = await outPdf.save();
+      const basename = reorderState.file.name.replace(/\.pdf$/i, '');
+      downloadPDF(pdfBytes, `${basename}_reordered.pdf`);
+    } catch (e) {
+      showToast('エラー: ページの並び替えに失敗しました。', true);
+    }
+  }
+
+  // --- 6. 画像をPDF化 ---
   async function handleImageToPdf() {
     if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
 
