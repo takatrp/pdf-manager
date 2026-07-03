@@ -199,6 +199,23 @@
     aspect-ratio: 11 / 15;
     height:auto;
   }
+  .single-page-item .thumb-wrap canvas {
+    transform-origin:center;
+    transition:transform .18s ease;
+  }
+  .single-page-item[data-preview-rotation="90"] .thumb-wrap canvas {
+    transform:rotate(90deg) scale(.72);
+  }
+  .single-page-item[data-preview-rotation="180"] .thumb-wrap canvas {
+    transform:rotate(180deg);
+  }
+  .single-page-item[data-preview-rotation="270"] .thumb-wrap canvas {
+    transform:rotate(270deg) scale(.72);
+  }
+  .single-page-item.rotate-active .thumb-wrap {
+    outline:2px solid #9bb9c3;
+    outline-offset:3px;
+  }
   .single-page-number {
     margin:0;
     font-size:11px;
@@ -225,6 +242,24 @@
   .single-page-item.selected .single-page-number {
     color:#2d5a67;
     font-weight:800;
+  }
+  .rotate-options {
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .rotate-options label {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    cursor:pointer;
+    font-size:14px;
+  }
+  .rotate-quick-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:10px;
   }
   .single-meta { min-width:0; }
   .single-name {
@@ -665,8 +700,9 @@
       <button class="feature-link-btn" data-feature-target="insert" type="button" onclick="showFeaturePanel('insert')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span class="feature-text">3. ページ追加 (Insert)</span></span><span class="feature-sub">指定位置に別PDFを挿入します。</span></button>
       <button class="feature-link-btn" data-feature-target="delete" type="button" onclick="showFeaturePanel('delete')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span class="feature-text">4. ページ削除 (Delete)</span></span><span class="feature-sub">不要なページを取り除きます。</span></button>
       <button class="feature-link-btn" data-feature-target="reorder" type="button" onclick="showFeaturePanel('reorder')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h11M8 12h11M8 18h11"/><path d="M4 7l2-2 2 2M6 5v14M4 17l2 2 2-2"/></svg><span class="feature-text">5. ページの並び替え (Reorder)</span></span><span class="feature-sub">サムネイルを動かしてページ順を変更します。</span></button>
-      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">6. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
-      <button class="feature-link-btn" data-feature-target="compress" type="button" onclick="showFeaturePanel('compress')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span class="feature-text">7. 圧縮 (Compress)</span></span><span class="feature-sub">PDFのファイルサイズを圧縮します。</span></button>
+      <button class="feature-link-btn" data-feature-target="rotate" type="button" onclick="showFeaturePanel('rotate')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v8h-8"/></svg><span class="feature-text">6. ページ回転 (Rotate)</span></span><span class="feature-sub">選択したページだけ向きを変えます。</span></button>
+      <button class="feature-link-btn" data-feature-target="image2pdf" type="button" onclick="showFeaturePanel('image2pdf')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span class="feature-text">7. 画像をPDF化 (Image to PDF)</span></span><span class="feature-sub">複数画像を1つのPDFへ変換します。</span></button>
+      <button class="feature-link-btn" data-feature-target="compress" type="button" onclick="showFeaturePanel('compress')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span class="feature-text">8. 圧縮 (Compress)</span></span><span class="feature-sub">PDFのファイルサイズを圧縮します。</span></button>
     </div>
   </section>
 
@@ -785,9 +821,38 @@
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
   </section>
 
+  <section class="card feature-panel" data-feature="rotate">
+    <div class="field">
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v8h-8"/></svg><span>6. ページ回転 (Rotate)</span></div>
+      <div class="helper">ページごとに回転角度を指定できます。最後に選んだページは、角度を変えるとそのページだけ更新されます。</div>
+      <div class="file-box" id="rotate-dropzone">
+        <input type="file" id="rotate-file" accept="application/pdf">
+        <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
+      </div>
+      <div class="single-preview" id="rotate-preview"></div>
+      <div class="rotate-quick-actions">
+        <button class="mini-btn" type="button" onclick="selectAllRotatePages()">全ページを選択</button>
+        <button class="mini-btn" type="button" onclick="clearRotateSelection()">選択解除</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="label" style="font-size:14px;font-weight:700;margin-bottom:10px;">回転角度</div>
+      <div class="rotate-options">
+        <label><input type="radio" name="rotate-angle" value="90" checked> 右90°</label>
+        <label><input type="radio" name="rotate-angle" value="180"> 180°</label>
+        <label><input type="radio" name="rotate-angle" value="270"> 左90°</label>
+      </div>
+    </div>
+    <div class="button-row">
+      <button class="btn" type="button" onclick="handleRotate()">回転して保存</button>
+      <button class="btn secondary" type="button" onclick="clearRotate()">クリア</button>
+    </div>
+    <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
   <section class="card feature-panel" data-feature="image2pdf">
     <div class="field">
-      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>6. 画像をPDF化 (Image to PDF)</span></div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>7. 画像をPDF化 (Image to PDF)</span></div>
       <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
       <div class="file-box" id="image2pdf-dropzone">
         <input type="file" id="image2pdf-files" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
@@ -806,7 +871,7 @@
 
   <section class="card feature-panel" data-feature="compress">
     <div class="field">
-      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>7. 圧縮 (Compress)</span></div>
+      <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>8. 圧縮 (Compress)</span></div>
       <div class="helper">PDFの各ページを画像として再レンダリングし、ファイルサイズを圧縮します。<br>※ 圧縮後はテキストの検索・コピーができなくなります。</div>
       <div class="file-box" id="compress-dropzone">
         <input type="file" id="compress-file" accept="application/pdf">
@@ -859,7 +924,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r33';
+  const VERSION = 'r35';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -868,7 +933,7 @@
   document.getElementById('last-updated-date').textContent = `${yyyy}-${mm}-${dd}`;
   document.getElementById('build-rev').textContent = VERSION;
 
-  const { PDFDocument, StandardFonts, rgb } = PDFLib;
+  const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
   const SUPPORTED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
   const HEIC_IMAGE_EXTENSIONS = ['heic', 'heif'];
   let heicConverterPromise = null;
@@ -902,12 +967,14 @@
     'insert-base-file': null,
     'insert-add-file': null,
     'delete-file': null,
+    'rotate-file': null,
     'annotate-file': null,
     'compress-file': null,
   };
   const selectedPagesState = {
     extract: new Set(),
     delete: new Set(),
+    rotate: new Set(),
   };
   const dragState = {
     merge: null,
@@ -920,6 +987,9 @@
     previewPdf: null,
     renderToken: 0,
   };
+  const rotatePageAngles = new Map();
+  let rotatePageCount = 0;
+  let rotateActivePage = null;
 
   function getFileExtension(file) {
     return (file?.name || '').split('.').pop().toLowerCase();
@@ -933,6 +1003,10 @@
   function isSupportedImageFile(file) {
     const ext = getFileExtension(file);
     return file?.type?.startsWith('image/') || SUPPORTED_IMAGE_EXTENSIONS.includes(ext);
+  }
+
+  function isPdfFile(file) {
+    return file?.type === 'application/pdf' || file?.name?.toLowerCase().endsWith('.pdf');
   }
 
   function waitForHeicConverter() {
@@ -1090,6 +1164,9 @@
   function setInputFileAndTriggerChange(inputId, file) {
     const inputEl = document.getElementById(inputId);
     if (!inputEl || !file) return;
+    if (Object.prototype.hasOwnProperty.call(singleFileState, inputId)) {
+      singleFileState[inputId] = file;
+    }
     setSingleFileToInput(inputEl, file);
     const changeEvent = new Event('change', { bubbles: true });
     inputEl.dispatchEvent(changeEvent);
@@ -1145,9 +1222,16 @@
         }
 
         if (featureName === 'reorder') {
-          const firstPdf = files.find((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+          const firstPdf = files.find(isPdfFile);
           if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
           setReorderSourceFile(firstPdf);
+          return;
+        }
+
+        if (featureName === 'rotate') {
+          const firstPdf = files.find(isPdfFile);
+          if (!firstPdf) return showToast('PDFファイルをドロップしてください。', true);
+          setInputFileAndTriggerChange('rotate-file', firstPdf);
           return;
         }
 
@@ -1173,14 +1257,84 @@
     return Array.from(selectedPagesState[selectionKey]).sort((a, b) => a - b);
   }
 
+  function clearPageSelection(selectionKey) {
+    if (selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+    if (selectionKey === 'rotate') {
+      rotatePageAngles.clear();
+      rotateActivePage = null;
+    }
+  }
+
   function toggleSelectedPage(selectionKey, pageNum) {
     if (!selectionKey || !selectedPagesState[selectionKey]) return;
     const set = selectedPagesState[selectionKey];
+    if (selectionKey === 'rotate') {
+      const selectedAngle = getSelectedRotateAngle();
+      const currentAngle = rotatePageAngles.get(pageNum);
+      if (set.has(pageNum) && currentAngle === selectedAngle) {
+        set.delete(pageNum);
+        rotatePageAngles.delete(pageNum);
+        if (rotateActivePage === pageNum) rotateActivePage = null;
+      } else {
+        set.add(pageNum);
+        rotatePageAngles.set(pageNum, selectedAngle);
+        rotateActivePage = pageNum;
+      }
+      return;
+    }
     if (set.has(pageNum)) set.delete(pageNum);
     else set.add(pageNum);
   }
 
-  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText, showAllPages = false, selectionKey = null }) {
+  function getRotateAngleLabel(angle) {
+    if (angle === 90) return '右90°';
+    if (angle === 180) return '180°';
+    if (angle === 270) return '左90°';
+    return `${angle}°`;
+  }
+
+  function getPageSelectButtonText(selectionKey, pageNum, selected) {
+    if (selectionKey !== 'rotate') return selected ? '選択解除' : '選択';
+    if (!selected) return '設定';
+    return rotatePageAngles.get(pageNum) === getSelectedRotateAngle() ? '解除' : '変更';
+  }
+
+  function applyPageSelectionVisual(pageItem, selectionKey, selected) {
+    const pageNum = Number(pageItem.dataset.page);
+    pageItem.classList.toggle('selected', selected);
+    pageItem.classList.toggle('rotate-active', selectionKey === 'rotate' && rotateActivePage === pageNum);
+    const pageLabel = pageItem.querySelector('.single-page-number');
+    if (selectionKey === 'rotate' && selected) {
+      const angle = rotatePageAngles.get(pageNum) || getSelectedRotateAngle();
+      pageItem.dataset.previewRotation = String(angle);
+      if (pageLabel) pageLabel.textContent = `${pageNum}ページ目 / ${getRotateAngleLabel(angle)}`;
+    } else {
+      delete pageItem.dataset.previewRotation;
+      if (pageLabel && pageNum) pageLabel.textContent = `${pageNum}ページ目`;
+    }
+  }
+
+  function syncSelectionPreview(selectionKey, previewId, noteText) {
+    const previewEl = document.getElementById(previewId);
+    const selectedSet = selectedPagesState[selectionKey];
+    if (!previewEl || !selectedSet) return;
+
+    previewEl.querySelectorAll('.single-page-item').forEach((pageItem) => {
+      const pageNum = Number(pageItem.dataset.page);
+      const selected = selectedSet.has(pageNum);
+      applyPageSelectionVisual(pageItem, selectionKey, selected);
+      const selectBtn = pageItem.querySelector('.single-page-btn[data-role="select"]');
+      if (selectBtn) selectBtn.textContent = getPageSelectButtonText(selectionKey, pageNum, selected);
+    });
+
+    const note = previewEl.querySelector('.single-preview-header .single-note');
+    if (note) {
+      const selectedCount = selectedSet.size;
+      note.textContent = selectedCount ? `${noteText}（選択中: ${selectedCount}ページ / 拡大は[拡大]）` : `${noteText}（タップで選択・[拡大]で表示）`;
+    }
+  }
+
+  function bindDropzoneFileInput({ inputId, dropzoneId, previewId, noteText, showAllPages = false, selectionKey = null, onPageCount = null }) {
     const inputEl = document.getElementById(inputId);
     const dropzoneEl = document.getElementById(dropzoneId);
     const previewEl = document.getElementById(previewId);
@@ -1197,9 +1351,11 @@
       if (!file) {
         previewEl.classList.remove('show', 'multi-pages');
         previewEl.innerHTML = '';
-        if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+        if (selectionKey) clearPageSelection(selectionKey);
+        if (onPageCount) onPageCount(0);
         return;
       }
+      if (onPageCount) onPageCount(0);
       previewEl.classList.add('show');
       previewEl.classList.toggle('multi-pages', showAllPages);
       previewEl.innerHTML = '';
@@ -1257,6 +1413,7 @@
       previewEl.appendChild(pagesGrid);
       await renderAllPdfPages(file, pagesGrid, {
         selectionKey,
+        onPageCount,
         onSelectionChange: () => {
           note.textContent = updateSelectionNote();
           syncInputsDisabledState();
@@ -1265,8 +1422,8 @@
     };
 
     inputEl.addEventListener('change', () => {
-      singleFileState[inputId] = inputEl.files[0] || null;
-      if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+      singleFileState[inputId] = inputEl.files[0] || singleFileState[inputId] || null;
+      if (selectionKey) clearPageSelection(selectionKey);
       renderSinglePreview();
     });
     ['dragenter', 'dragover'].forEach((eventName) => {
@@ -1282,10 +1439,10 @@
       });
     });
     dropzoneEl.addEventListener('drop', (e) => {
-      const files = Array.from(e.dataTransfer.files).filter((file) => file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf'));
+      const files = Array.from(e.dataTransfer.files).filter(isPdfFile);
       if (!files.length) return;
       singleFileState[inputId] = files[0];
-      if (selectionKey && selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+      if (selectionKey) clearPageSelection(selectionKey);
       setSingleFileToInput(inputEl, files[0]);
       renderSinglePreview();
     });
@@ -1391,16 +1548,19 @@
   async function renderAllPdfPages(file, container, options = {}) {
     const selectionKey = options.selectionKey || null;
     const onSelectionChange = options.onSelectionChange || (() => {});
+    const onPageCount = options.onPageCount || (() => {});
     container.innerHTML = '';
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
       const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
       const pdf = await loadingTask.promise;
+      onPageCount(pdf.numPages);
 
       for (let pageNum = 1; pageNum <= pdf.numPages; pageNum += 1) {
         const pageItem = document.createElement('div');
         pageItem.className = 'single-page-item';
+        pageItem.dataset.page = String(pageNum);
 
         const pageThumb = document.createElement('div');
         pageThumb.className = 'thumb-wrap zoomable';
@@ -1436,20 +1596,21 @@
           const selectBtn = document.createElement('button');
           selectBtn.className = 'single-page-btn';
           selectBtn.type = 'button';
+          selectBtn.dataset.role = 'select';
           const syncSelectBtn = () => {
             const selected = selectedPagesState[selectionKey].has(pageNum);
-            selectBtn.textContent = selected ? '選択解除' : '選択';
+            selectBtn.textContent = getPageSelectButtonText(selectionKey, pageNum, selected);
           };
           selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             toggleSelectedPage(selectionKey, pageNum);
-            pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
+            applyPageSelectionVisual(pageItem, selectionKey, selectedPagesState[selectionKey].has(pageNum));
             syncSelectBtn();
             onSelectionChange();
           });
           actions.appendChild(selectBtn);
           if (selectedPagesState[selectionKey]?.has(pageNum)) {
-            pageItem.classList.add('selected');
+            applyPageSelectionVisual(pageItem, selectionKey, true);
           }
           syncSelectBtn();
         }
@@ -1459,10 +1620,10 @@
         pageItem.addEventListener('click', () => {
           if (!selectionKey) return;
           toggleSelectedPage(selectionKey, pageNum);
-          pageItem.classList.toggle('selected', selectedPagesState[selectionKey].has(pageNum));
-          const maybeBtn = actions.querySelector('.single-page-btn:last-child');
-          if (maybeBtn && maybeBtn.textContent !== '拡大') {
-            maybeBtn.textContent = selectedPagesState[selectionKey].has(pageNum) ? '選択解除' : '選択';
+          applyPageSelectionVisual(pageItem, selectionKey, selectedPagesState[selectionKey].has(pageNum));
+          const maybeBtn = actions.querySelector('.single-page-btn[data-role="select"]');
+          if (maybeBtn) {
+            maybeBtn.textContent = getPageSelectButtonText(selectionKey, pageNum, selectedPagesState[selectionKey].has(pageNum));
           }
           onSelectionChange();
         });
@@ -1472,6 +1633,7 @@
         await renderPdfPageToCanvas(pdf, pageNum, pageCanvas);
       }
     } catch (error) {
+      onPageCount(0);
       container.innerHTML = '';
       const note = document.createElement('p');
       note.className = 'single-note';
@@ -2024,7 +2186,7 @@
     });
 
     selectionKeys.forEach((selectionKey) => {
-      if (selectedPagesState[selectionKey]) selectedPagesState[selectionKey].clear();
+      clearPageSelection(selectionKey);
     });
 
     Object.entries(numericDefaults).forEach(([inputId, value]) => {
@@ -2095,6 +2257,45 @@
     actionStatusEl.textContent = '';
     actionStatusEl.classList.remove('error', 'busy');
     sysToastEl.classList.remove('busy');
+    showClearedToast();
+  }
+
+  function selectAllRotatePages() {
+    if (!getSelectedSingleFile('rotate-file')) {
+      showToast('回転するPDFを選択してください。', true);
+      return;
+    }
+    if (!rotatePageCount) {
+      showToast('ページプレビューの読み込み後に選択できます。', true);
+      return;
+    }
+
+    const angle = getSelectedRotateAngle();
+    clearPageSelection('rotate');
+    for (let pageNum = 1; pageNum <= rotatePageCount; pageNum += 1) {
+      selectedPagesState.rotate.add(pageNum);
+      rotatePageAngles.set(pageNum, angle);
+    }
+    rotateActivePage = null;
+    syncSelectionPreview('rotate', 'rotate-preview', '回転対象ファイル');
+    showToast(`${rotatePageCount}ページを${getRotateAngleLabel(angle)}に設定しました。`);
+  }
+
+  function clearRotateSelection() {
+    clearPageSelection('rotate');
+    syncSelectionPreview('rotate', 'rotate-preview', '回転対象ファイル');
+    showToast('ページ選択を解除しました。');
+  }
+
+  function clearRotate() {
+    rotatePageCount = 0;
+    resetSingleFeature({
+      inputIds: ['rotate-file'],
+      previewIds: ['rotate-preview'],
+      selectionKeys: ['rotate'],
+    });
+    const defaultAngleEl = document.querySelector('input[name="rotate-angle"][value="90"]');
+    if (defaultAngleEl) defaultAngleEl.checked = true;
     showClearedToast();
   }
 
@@ -2250,7 +2451,16 @@
   bindDropzoneFileInput({ inputId: 'insert-base-file', dropzoneId: 'insert-base-dropzone', previewId: 'insert-base-preview', noteText: '挿入先（ベース）ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'insert-add-file', dropzoneId: 'insert-add-dropzone', previewId: 'insert-add-preview', noteText: '挿入元ファイル', showAllPages: true });
   bindDropzoneFileInput({ inputId: 'delete-file', dropzoneId: 'delete-dropzone', previewId: 'delete-preview', noteText: '削除対象ファイル', showAllPages: true, selectionKey: 'delete' });
+  bindDropzoneFileInput({ inputId: 'rotate-file', dropzoneId: 'rotate-dropzone', previewId: 'rotate-preview', noteText: '回転対象ファイル', showAllPages: true, selectionKey: 'rotate', onPageCount: (pageCount) => { rotatePageCount = pageCount; } });
   bindDropzoneFileInput({ inputId: 'compress-file', dropzoneId: 'compress-dropzone', previewId: 'compress-preview', noteText: '圧縮対象ファイル' });
+  document.querySelectorAll('input[name="rotate-angle"]').forEach((inputEl) => {
+    inputEl.addEventListener('change', () => {
+      if (rotateActivePage && selectedPagesState.rotate.has(rotateActivePage)) {
+        rotatePageAngles.set(rotateActivePage, getSelectedRotateAngle());
+      }
+      syncSelectionPreview('rotate', 'rotate-preview', '回転対象ファイル');
+    });
+  });
   bindFeatureShortcutDrop();
 
   // --- 1. 結合 ---
@@ -2366,7 +2576,7 @@
     }
   }
 
-  // --- 7. 圧縮 ---
+  // --- 8. 圧縮 ---
   async function handleCompress() {
     const file = getSelectedSingleFile('compress-file');
     if (!file) return showToast('ファイルを選択してください。', true);
@@ -2435,7 +2645,48 @@
     }
   }
 
-  // --- 6. 画像をPDF化 ---
+  function getSelectedRotateAngle() {
+    const angleEl = document.querySelector('input[name="rotate-angle"]:checked');
+    const angle = Number(angleEl?.value || 90);
+    return [90, 180, 270].includes(angle) ? angle : 90;
+  }
+
+  function normalizeRotationAngle(angle) {
+    return ((angle % 360) + 360) % 360;
+  }
+
+  // --- 6. ページ回転 ---
+  async function handleRotate() {
+    const file = getSelectedSingleFile('rotate-file');
+    const selectedPages = getSelectedPages('rotate');
+
+    if (!file) return showToast('ファイルを選択してください。', true);
+    if (!selectedPages.length) return showToast('回転するページを選択してください。', true);
+
+    showProcessingStatus('選択ページを回転しています');
+    try {
+      const bytes = await readFileAsArrayBuffer(file);
+      const pdf = await PDFDocument.load(bytes);
+      const totalPages = pdf.getPageCount();
+
+      if (selectedPages.some((page) => page > totalPages)) return showToast(`このPDFは${totalPages}ページまでです。`, true);
+
+      selectedPages.forEach((pageNum) => {
+        const page = pdf.getPage(pageNum - 1);
+        const currentAngle = page.getRotation()?.angle || 0;
+        const rotateAngle = rotatePageAngles.get(pageNum) || getSelectedRotateAngle();
+        page.setRotation(degrees(normalizeRotationAngle(currentAngle + rotateAngle)));
+      });
+
+      const pdfBytes = await pdf.save();
+      const basename = file.name.replace(/\.pdf$/i, '');
+      downloadPDF(pdfBytes, `${basename}_rotated.pdf`);
+    } catch (e) {
+      showToast('エラー: ページの回転に失敗しました。', true);
+    }
+  }
+
+  // --- 7. 画像をPDF化 ---
   async function handleImageToPdf() {
     if (!image2pdfFilesState.length) return showToast('画像を1つ以上追加してください。', true);
 
