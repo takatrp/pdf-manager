@@ -2,6 +2,10 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
+<meta
+  http-equiv="Content-Security-Policy"
+  content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; worker-src 'self' blob:; connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com; img-src 'self' blob: data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'; manifest-src 'self';"
+/>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-X61GPE088Q"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -15,8 +19,8 @@
 
 <meta name="theme-color" content="#578899" />
 <link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
-<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
-<script src="https://unpkg.com/heic2any/dist/heic2any.min.js"></script>
+<script src="./vendor/pdf-lib/pdf-lib.min.js"></script>
+<script src="./vendor/heic2any/heic2any.min.js"></script>
 
 <style>
   :root {
@@ -933,7 +937,26 @@
   document.getElementById('last-updated-date').textContent = `${yyyy}-${mm}-${dd}`;
   document.getElementById('build-rev').textContent = VERSION;
 
-  const { PDFDocument, StandardFonts, rgb, degrees } = PDFLib;
+  const missingLibraries = [
+    ['PDF-Lib', globalThis.PDFLib],
+    ['heic2any', globalThis.heic2any],
+  ].filter(([, library]) => !library).map(([name]) => name);
+  if (missingLibraries.length) {
+    const libraryErrorMessage = `PDF処理ライブラリを読み込めませんでした（${missingLibraries.join(' / ')}）。ページを再読み込みしてください。`;
+    const libraryStatusEl = document.getElementById('action-status');
+    const libraryToastEl = document.getElementById('sysToast');
+    if (libraryStatusEl) {
+      libraryStatusEl.textContent = libraryErrorMessage;
+      libraryStatusEl.classList.add('error');
+    }
+    if (libraryToastEl) {
+      libraryToastEl.textContent = libraryErrorMessage;
+      libraryToastEl.classList.add('show');
+    }
+    throw new Error(libraryErrorMessage);
+  }
+
+  const { PDFDocument, StandardFonts, rgb, degrees } = globalThis.PDFLib;
   const SUPPORTED_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif'];
   const HEIC_IMAGE_EXTENSIONS = ['heic', 'heif'];
   let heicConverterPromise = null;
@@ -1053,12 +1076,22 @@
 
   async function getPdfJsLib() {
     if (!pdfjsLibPromise) {
-      pdfjsLibPromise = import('https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.min.mjs').then((pdfjsLib) => {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.5.136/build/pdf.worker.min.mjs';
+      pdfjsLibPromise = import('./vendor/pdfjs/pdf.min.mjs').then((pdfjsLib) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+          './vendor/pdfjs/pdf.worker.min.mjs',
+          window.location.href
+        ).href;
         return pdfjsLib;
       });
     }
     return pdfjsLibPromise;
+  }
+
+  function createPdfJsLoadingTask(pdfjsLib, data) {
+    return pdfjsLib.getDocument({
+      data,
+      isEvalSupported: false,
+    });
   }
 
   // --- ヘルパー関数 ---
@@ -1470,7 +1503,7 @@
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const loadingTask = createPdfJsLoadingTask(pdfjsLib, arrayBuffer);
       const pdf = await loadingTask.promise;
       const page = await pdf.getPage(1);
       const viewport = page.getViewport({ scale: 1 });
@@ -1530,6 +1563,7 @@
       ctx.fillStyle = '#f3f8fa';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.dataset.previewState = 'ready';
     } catch (_) {
       const ctx = canvas.getContext('2d');
       canvas.width = targetWidth;
@@ -1540,6 +1574,7 @@
       ctx.font = 'bold 11px sans-serif';
       ctx.textAlign = 'center';
       ctx.fillText('IMG', canvas.width / 2, canvas.height / 2 + 4);
+      canvas.dataset.previewState = 'fallback';
     } finally {
       if (preview?.revoke) URL.revokeObjectURL(preview.url);
     }
@@ -1553,7 +1588,7 @@
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
+      const loadingTask = createPdfJsLoadingTask(pdfjsLib, arrayBuffer);
       const pdf = await loadingTask.promise;
       onPageCount(pdf.numPages);
 
@@ -1912,7 +1947,7 @@
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const pdf = await createPdfJsLoadingTask(pdfjsLib, arrayBuffer).promise;
       if (token !== reorderState.renderToken) {
         if (pdf.destroy) pdf.destroy();
         return;
@@ -2590,7 +2625,7 @@
     try {
       const pdfjsLib = await getPdfJsLib();
       const arrayBuffer = await readFileAsArrayBuffer(file);
-      srcPdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      srcPdf = await createPdfJsLoadingTask(pdfjsLib, arrayBuffer).promise;
       let bestResult = null;
 
       for (let i = 0; i < attempts.length; i++) {

@@ -1,0 +1,34 @@
+{
+  "packages": {
+    "pdf-lib": {
+      "version": "1.17.1",
+      "sourcePackage": "pdf-lib",
+      "sourceFile": "node_modules/pdf-lib/dist/pdf-lib.min.js",
+      "servedFile": "vendor/pdf-lib/pdf-lib.min.js",
+      "sha256": "0f9a5cad07941f0826586c94e089d89b918c46e5c17cf2d5a3c6f666e3bc694f"
+    },
+    "heic2any": {
+      "version": "0.0.4",
+      "sourcePackage": "heic2any",
+      "sourceFile": "node_modules/heic2any/dist/heic2any.min.js",
+      "servedFile": "vendor/heic2any/heic2any.min.js",
+      "sha256": "0963cfa50e9e1e7e6af929a40a81e3e898a673f1270eafa6917dd137e4968164"
+    },
+    "pdfjs-dist": {
+      "version": "4.5.136",
+      "sourcePackage": "pdfjs-dist",
+      "files": [
+        {
+          "sourceFile": "node_modules/pdfjs-dist/build/pdf.min.mjs",
+          "servedFile": "vendor/pdfjs/pdf.min.mjs",
+          "sha256": "2548d51b773ffd3eb39d22d58567f051c46548a1771688617a10f87bda1e41ca"
+        },
+        {
+          "sourceFile": "node_modules/pdfjs-dist/build/pdf.worker.min.mjs",
+          "servedFile": "vendor/pdfjs/pdf.worker.min.mjs",
+          "sha256": "4c61e40cefbdee840d6d4ef1a43428b9995a0ad6544087175eec04df8d693291"
+        }
+      ]
+    }
+  }
+}

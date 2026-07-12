@@ -1,0 +1,9 @@
+vendor/pdf-lib/pdf-lib.min.js -text
+vendor/heic2any/heic2any.min.js -text
+vendor/pdfjs/*.mjs -text
+vendor/manifest.json text eol=lf
+vendor/licenses/* text eol=lf
+tests/fixtures/*.pdf binary
+tests/fixtures/*.jpg binary
+tests/fixtures/*.png binary
+tests/fixtures/*.heic binary
