@@ -1,0 +1,24 @@
+{
+  "name": "matsumoto-pdf-manager",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "fixtures:generate": "node scripts/generate-fixtures.mjs",
+    "vendor:sync": "node scripts/sync-vendor.mjs",
+    "test": "playwright test",
+    "test:security": "playwright test tests/network-security.spec.js tests/static-security.spec.js",
+    "build": "node scripts/verify-build.mjs"
+  },
+  "dependencies": {
+    "heic2any": "0.0.4",
+    "pdf-lib": "1.17.1",
+    "pdfjs-dist": "4.5.136"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.61.1"
+  },
+  "overrides": {
+    "tar": "7.5.20"
+  }
+}
