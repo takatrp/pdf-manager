@@ -20,14 +20,18 @@ const cases = [
   { size: [595.28, 841.89], rotate: 90 }, { size: [595.28, 841.89], rotate: 180 },
   { size: [800, 1000], rotate: 270, crop: [50, 70, 460, 650] },
   { size: [400, 500], rotate: 90, crop: [20, 30, 210, 297], unit: 2 },
+  { size: [600, 800], crop: [-10, -20, 650, 900] },
 ];
 for (const scale of [1, 2]) test(`raster compression preserves actual pixels/physical geometry at scale ${scale}`, async () => {
   const doc = await PDFDocument.create();
   for (const spec of cases) {
     const page = doc.addPage(spec.size); if (spec.rotate) page.setRotation(degrees(spec.rotate)); if (spec.crop) page.setCropBox(...spec.crop);
     if (spec.unit) page.node.set(PDFName.of('UserUnit'), PDFNumber.of(spec.unit));
-    const [x, y, w, h] = spec.crop || [0, 0, ...spec.size];
-    for (const [cx, cy, color] of [[x + 15, y + 15, rgb(1, 0, 0)], [x + w - 60, y + 15, rgb(0, .7, 0)], [x + 15, y + h - 60, rgb(0, 0, 1)]]) page.drawRectangle({ x: cx, y: cy, width: 40, height: 40, color });
+    const crop = page.getCropBox(), media = page.getMediaBox();
+    const x = Math.max(crop.x, media.x), y = Math.max(crop.y, media.y);
+    const w = Math.min(crop.x + crop.width, media.x + media.width) - x;
+    const h = Math.min(crop.y + crop.height, media.y + media.height) - y;
+    for (const [cx, cy, color] of [[x + 15, y + 15, rgb(1, 0, 0)], [x + w - 60, y + 15, rgb(0, 1, 0)], [x + 15, y + h - 60, rgb(0, 0, 1)]]) page.drawRectangle({ x: cx, y: cy, width: 40, height: 40, color });
   }
   const input = await load(await doc.save()), bytes = await build(input, { scale, quality: .9 }), output = await load(bytes);
   for (let i = 0; i < cases.length; i++) {
@@ -45,6 +49,23 @@ for (const scale of [1, 2]) test(`raster compression preserves actual pixels/phy
     assert.equal(original.length, compressed.length); let sum = 0;
     for (let p = 0; p < original.length; p++) sum += Math.abs(original[p] - compressed[p]);
     assert.ok(sum / original.length < 1.2, `page ${i + 1}: ${sum / original.length}`);
+    // A mostly-white page can mask clipped or displaced registration marks in
+    // the mean error. Verify every colored corner survives in the same position.
+    for (let channel = 0; channel < 3; channel++) {
+      const centroid = (pixels) => {
+        let count = 0, x = 0, y = 0;
+        for (let offset = 0; offset < pixels.length; offset += 4) {
+          if (pixels[offset + channel] < 180 || pixels[offset + (channel + 1) % 3] > 70 || pixels[offset + (channel + 2) % 3] > 70) continue;
+          count++; x += (offset / 4) % canvases[0].width; y += Math.floor(offset / 4 / canvases[0].width);
+        }
+        return { count, x: x / count, y: y / count };
+      };
+      const source = centroid(original), saved = centroid(compressed);
+      assert.ok(source.count > 10, `page ${i + 1}, source channel ${channel}`);
+      assert.ok(saved.count > 10, `page ${i + 1}, saved channel ${channel}`);
+      assert.ok(Math.abs(source.x - saved.x) < 1, `page ${i + 1}, x channel ${channel}`);
+      assert.ok(Math.abs(source.y - saved.y) < 1, `page ${i + 1}, y channel ${channel}`);
+    }
     assert.equal((await after.getTextContent()).items.length, 0);
   }
   if (scale === 2) await writeFile('artifacts/compression-mixed-physical-sizes.pdf', bytes);

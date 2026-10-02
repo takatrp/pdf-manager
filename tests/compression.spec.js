@@ -25,7 +25,12 @@ async function createGeometryFixture() {
     if (spec.crop) page.setCropBox(...spec.crop);
     if (spec.rotation) page.setRotation(degrees(spec.rotation));
     if (spec.userUnit) page.node.set(PDFName.of('UserUnit'), PDFNumber.of(spec.userUnit));
-    const [x, y, width, height] = spec.crop || [0, 0, ...spec.size];
+    // PDF.js displays the intersection of the CropBox and MediaBox. Keep the
+    // registration marks inside that visible area, including oversized crops.
+    const crop = page.getCropBox(), media = page.getMediaBox();
+    const x = Math.max(crop.x, media.x), y = Math.max(crop.y, media.y);
+    const width = Math.min(crop.x + crop.width, media.x + media.width) - x;
+    const height = Math.min(crop.y + crop.height, media.y + media.height) - y;
     page.drawRectangle({ x, y, width, height, color: rgb(1, 1, 1) });
     // Asymmetric colored corners catch accidental rotation, mirroring or cropping.
     for (const [cx, cy, color] of [
@@ -120,8 +125,8 @@ for (const scale of [1, 2]) {
         };
         const sourceCorner = centroid(before[i].pixels);
         const outputCorner = centroid(after[i].pixels);
-        expect(sourceCorner.count).toBeGreaterThan(10);
-        expect(outputCorner.count).toBeGreaterThan(10);
+        expect(sourceCorner.count, `${geometryCases[i].name}: source channel ${channel}`).toBeGreaterThan(10);
+        expect(outputCorner.count, `${geometryCases[i].name}: output channel ${channel}`).toBeGreaterThan(10);
         expect(Math.abs(sourceCorner.x - outputCorner.x)).toBeLessThan(1);
         expect(Math.abs(sourceCorner.y - outputCorner.y)).toBeLessThan(1);
       }

@@ -44,6 +44,7 @@ for (const spec of [
   { label: 'rotate180crop', size: [595.28, 841.89], rotation: 180, crop: [40, 60, 460, 690] },
   { label: 'rotate270crop', size: [841.89, 1190.55], rotation: 270, crop: [70, 90, 700, 950] },
   { label: 'userunit', size: [300, 420], rotation: 90, crop: [20, 30, 240, 350], unit: 2 },
+  { label: 'UserUnitRotateCrop', size: [400, 500], rotation: 90, crop: [20, 30, 210, 297], unit: 2.5 },
   { label: 'rotate_after_mark', size: [595.28, 841.89], rotation: 0, finalRotation: 90 },
 ]) {
   test(`actual PDF output retains content and annotation pixels: ${spec.label}`, async () => {
@@ -51,9 +52,13 @@ for (const spec of [
     const original = doc.addPage(spec.size); original.setRotation(degrees(spec.rotation));
     if (spec.crop) original.setCropBox(...spec.crop);
     if (spec.unit) original.node.set(PDFName.of('UserUnit'), PDFNumber.of(spec.unit));
-    original.drawText(`SEARCHABLE ${spec.label}`, { x: 70, y: 180, size: 17, font });
+    const text = `SEARCHABLE ${spec.label}`;
+    const crop = original.getCropBox();
+    const size = Math.min(17, (crop.width - 60) / font.widthOfTextAtSize(text, 1));
+    original.drawText(text, { x: crop.x + 30, y: crop.y + crop.height / 2, size, font });
     original.drawRectangle({ x: 80, y: 100, width: 60, height: 40, color: rgb(.1, .6, .8) });
     const bytes = await doc.save(), input = await load(bytes);
+    assert.equal((await (await input.getPage(1)).getTextContent()).items.map((item) => item.str).join(' '), text);
     const pages = [{ id: 1, source: 1, index: 0, rotation: spec.finalRotation ?? spec.rotation, marks: [
       { kind: 'text', text: '照合メモ 日本語123', x: .1, y: .12, size: 20, rotation: spec.rotation },
       { kind: 'confirmed', text: '確認済', x: .56, y: .32, size: 20, rotation: spec.rotation },
@@ -67,7 +72,7 @@ for (const spec of [
     assert.deepEqual(exported.getPage(0).getCropBox(), original.getCropBox());
     assert.equal(exported.getPage(0).node.get(PDFName.of('UserUnit'))?.asNumber() || 1, spec.unit || 1);
     const output = await load(outputBytes), outputPage = await output.getPage(1);
-    assert.match((await outputPage.getTextContent()).items.map((item) => item.str).join(' '), /SEARCHABLE/);
+    assert.equal((await outputPage.getTextContent()).items.map((item) => item.str).join(' '), text);
     const { canvas: expected, base } = await render(await input.getPage(1), pages[0].rotation);
     expected.getContext('2d').drawImage(functions.createOverlay(pages[0], base, 0), 0, 0, expected.width, expected.height);
     const { canvas: actual } = await render(outputPage, pages[0].rotation);

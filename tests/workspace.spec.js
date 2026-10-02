@@ -192,7 +192,11 @@ async function geometryFixture(spec) {
   if (spec.rotation) page.setRotation(degrees(spec.rotation));
   if (spec.unit) page.node.set(PDFName.of('UserUnit'), PDFNumber.of(spec.unit));
   const [x, y, width, height] = spec.crop || [0, 0, ...spec.size];
-  page.drawText(`SEARCHABLE ${spec.label}`, { x: x + 30, y: y + height / 2, size: 12, font, color: rgb(.3, .3, .3) });
+  const text = `SEARCHABLE ${spec.label}`;
+  // The complete source string must fit inside the crop before testing whether
+  // export preserves it. PDF.js legitimately omits text outside the crop.
+  const size = Math.min(12, (width - 60) / font.widthOfTextAtSize(text, 1));
+  page.drawText(text, { x: x + 30, y: y + height / 2, size, font, color: rgb(.3, .3, .3) });
   page.drawRectangle({ x: x + 10, y: y + 10, width: 15, height: 25, color: rgb(.7, .7, .7) });
   return { name: `${spec.label}.pdf`, mimeType: 'application/pdf', buffer: Buffer.from(await doc.save()) };
 }
@@ -200,7 +204,9 @@ async function geometryFixture(spec) {
 for (const spec of geometries) {
   test(`日本語メモ・確認印・チェック・番号の配置と元の検索文字を保存する: ${spec.label}`, async ({ page }) => {
     await openWorkspace(page);
-    await addFiles(page, await geometryFixture(spec), 1);
+    const source = await geometryFixture(spec);
+    expect((await readPdf(page, source.buffer))[0].text).toContain(`SEARCHABLE ${spec.label}`);
+    await addFiles(page, source, 1);
     await addMark(page, 'text', '照合メモ 日本語123', { x: .15, y: .14 });
     await addMark(page, 'confirmed', null, { x: .53, y: .38 });
     await addMark(page, 'review', null, { x: .55, y: .67 });
@@ -256,7 +262,17 @@ test('スマートフォン幅で横溢れなく編集・プレビュー・保�
   await page.setViewportSize({ width: 390, height: 844 });
   await openWorkspace(page);
   await addFiles(page, fixture('simple-3pages.pdf'), 3);
-  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  const expectNoOverflow = () => expect.poll(() => page.evaluate(() => ({
+    viewport: window.innerWidth,
+    overflow: Math.max(0, document.documentElement.scrollWidth - window.innerWidth),
+  }))).toEqual({ viewport: 390, overflow: 0 });
+  await expectNoOverflow();
+  // The thumbnail strip scrolls locally without making the document wider.
+  const strip = page.locator('#workspace-pages');
+  expect(await strip.evaluate((element) => element.scrollWidth > element.clientWidth)).toBe(true);
+  const previewBox = await page.locator('#workspace-canvas').boundingBox();
+  expect(previewBox.x).toBeGreaterThanOrEqual(0);
+  expect(previewBox.x + previewBox.width).toBeLessThanOrEqual(390);
   await page.locator('#workspace-mark').selectOption('confirmed');
   await page.locator('#workspace-add-note').click();
   await expect(page.locator('#workspace-canvas')).toHaveAttribute('data-ready', 'true');
@@ -267,6 +283,7 @@ test('スマートフォン幅で横溢れなく編集・プレビュー・保�
   await page.locator('#workspace-preview-save').click();
   const dialog = page.locator('#workspace-save-dialog');
   await expect(dialog).toBeVisible();
+  await expectNoOverflow();
   const box = await dialog.boundingBox();
   expect(box.x).toBeGreaterThanOrEqual(0); expect(box.x + box.width).toBeLessThanOrEqual(391);
   await page.screenshot({ path: testInfo.outputPath('workspace-mobile-save.png'), fullPage: true });
