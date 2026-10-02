@@ -16,6 +16,7 @@
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>PDFマネージャー</title>
+<link rel="stylesheet" href="./editor.css">
 
 <meta name="theme-color" content="#578899" />
 <link rel="icon" type="image/png" sizes="192x192" href="favicon192192.png" />
@@ -682,8 +683,9 @@
       <h1 class="title">セキュアPDFマネージャー</h1>
     </div>
     <div class="subtitle">
-      機密データを守るため、サーバーへは一切送信せず、お使いの端末（ブラウザ内）だけで安全にPDFを処理します。<br>
-      作成されたファイルは元のファイルを上書きせず、以下の場所に新規保存されます。
+      PDF・画像の内容は、お使いのブラウザ内で処理し、アップロードしません。<br>
+      このサイトはアクセス解析（Google Analytics）のため外部通信を行います。機密資料の利用は所属先のルールに従ってください。<br>
+      作成されたファイルは元のファイルを上書きせず、ブラウザの設定に応じた場所に別ファイルとして保存されます。
       <ul style="margin: 6px 0 0; padding-left: 20px; line-height: 1.6;">
         <li><b>Windows / Mac</b>：「ダウンロード」フォルダ</li>
         <li><b>iOS (iPhone/iPad)</b>：「ファイル」アプリ内の「ダウンロード」（またはiCloud Drive内）</li>
@@ -698,6 +700,13 @@
   </div>
 
   <section class="card feature-panel active" id="feature-home">
+    <div class="workspace-intro">
+      <h2>まとめて編集して、最後に保存</h2>
+      <p>結合・ページ追加・回転・削除・並び替えを続けて操作。日本語メモ、確認印、ページ番号も付けられます。</p>
+      <button class="btn feature-link-btn" data-feature-target="workspace" type="button" onclick="showFeaturePanel('workspace')">PDFをまとめて編集</button>
+      <p class="helper">操作を元に戻せます。作業はこのタブ内だけに保持され、閉じると消えます。</p>
+    </div>
+    <h2 class="tools-heading">個別の操作</h2>
     <div class="feature-home">
       <button class="feature-link-btn" data-feature-target="merge" type="button" onclick="showFeaturePanel('merge')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span class="feature-text">1. 結合 (Merge)</span></span><span class="feature-sub">複数のPDFを1つにまとめます。</span></button>
       <button class="feature-link-btn" data-feature-target="extract" type="button" onclick="showFeaturePanel('extract')"><span class="feature-head"><svg class="feature-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span class="feature-text">2. 分解・抽出 (Extract)</span></span><span class="feature-sub">必要なページだけを切り出します。</span></button>
@@ -715,7 +724,7 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10M7 12h10M7 17h6"/><rect x="4" y="4" width="16" height="16" rx="2"/></svg><span>1. 結合 (Merge)</span></div>
       <div class="helper">複数のPDFファイルを1つのファイルにまとめます。</div>
       <div class="file-box" id="merge-dropzone">
-        <input type="file" id="merge-files" accept="application/pdf" multiple>
+        <input type="file" id="merge-files" aria-label="結合するPDF" accept="application/pdf" multiple>
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="merge-empty" id="merge-empty">ファイルを2つ以上追加すると結合できます。</div>
@@ -733,16 +742,16 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7v10M15 7v10M4 17h16"/></svg><span>2. 分解・抽出 (Extract)</span></div>
       <div class="helper">元のPDFから、指定したページ範囲または選択ページだけを切り出します。</div>
       <div class="file-box" id="extract-dropzone">
-        <input type="file" id="extract-file" accept="application/pdf">
+        <input type="file" id="extract-file" aria-label="抽出するPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="extract-preview"></div>
     </div>
     <div class="field">
       <div class="flex-row">
-        <input type="number" id="extract-start" class="input-num" min="1" value="1" placeholder="開始">
+        <input type="number" id="extract-start" aria-label="抽出開始ページ" class="input-num" min="1" value="1" placeholder="開始">
         <span>〜</span>
-        <input type="number" id="extract-end" class="input-num" min="1" value="1" placeholder="終了">
+        <input type="number" id="extract-end" aria-label="抽出終了ページ" class="input-num" min="1" value="1" placeholder="終了">
         <span>ページ</span>
       </div>
     </div>
@@ -759,13 +768,13 @@
       <div class="helper">ベースとなるPDFの指定した位置に、別のPDFを挿入します。</div>
       <div class="file-box" id="insert-base-dropzone" style="margin-bottom:10px;">
         <div class="helper" style="margin:0 0 4px;">ベースのPDF</div>
-        <input type="file" id="insert-base-file" accept="application/pdf">
+        <input type="file" id="insert-base-file" aria-label="追加先のPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="insert-base-preview" style="margin-bottom:10px;"></div>
       <div class="file-box" id="insert-add-dropzone">
         <div class="helper" style="margin:0 0 4px;">挿入したいPDF</div>
-        <input type="file" id="insert-add-file" accept="application/pdf">
+        <input type="file" id="insert-add-file" aria-label="追加するPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="insert-add-preview"></div>
@@ -773,7 +782,7 @@
     <div class="field">
       <div class="flex-row">
         <span>挿入位置：</span>
-        <input type="number" id="insert-position" class="input-num" min="1" value="2" style="max-width: 100px;">
+        <input type="number" id="insert-position" aria-label="挿入ページ位置" class="input-num" min="1" value="2" style="max-width: 100px;">
         <span>ページ目として</span>
       </div>
     </div>
@@ -789,7 +798,7 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg><span>4. ページ削除 (Delete)</span></div>
       <div class="helper">指定した不要ページ（複数選択可）を取り除きます。</div>
       <div class="file-box" id="delete-dropzone">
-        <input type="file" id="delete-file" accept="application/pdf">
+        <input type="file" id="delete-file" aria-label="ページを削除するPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="delete-preview"></div>
@@ -797,7 +806,7 @@
     <div class="field">
       <div class="flex-row">
         <span>削除するページ：</span>
-        <input type="number" id="delete-page" class="input-num" min="1" value="1" style="max-width: 100px;">
+        <input type="number" id="delete-page" aria-label="削除するページ番号" class="input-num" min="1" value="1" style="max-width: 100px;">
       </div>
     </div>
     <div class="button-row">
@@ -812,7 +821,7 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h11M8 12h11M8 18h11"/><path d="M4 7l2-2 2 2M6 5v14M4 17l2 2 2-2"/></svg><span>5. ページの並び替え (Reorder)</span></div>
       <div class="helper">PDFのページサムネイルをドラッグ＆ドロップして、ページ順を変更します。</div>
       <div class="file-box" id="reorder-dropzone">
-        <input type="file" id="reorder-file" accept="application/pdf">
+        <input type="file" id="reorder-file" aria-label="並び替えるPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="merge-empty" id="reorder-empty">並び替えるPDFを追加してください。</div>
@@ -830,7 +839,7 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v8h-8"/></svg><span>6. ページ回転 (Rotate)</span></div>
       <div class="helper">ページごとに回転角度を指定できます。最後に選んだページは、角度を変えるとそのページだけ更新されます。</div>
       <div class="file-box" id="rotate-dropzone">
-        <input type="file" id="rotate-file" accept="application/pdf">
+        <input type="file" id="rotate-file" aria-label="回転するPDF" accept="application/pdf">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="rotate-preview"></div>
@@ -859,7 +868,7 @@
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 14l2-2 3 3 3-4 2 3"/></svg><span>7. 画像をPDF化 (Image to PDF)</span></div>
       <div class="helper">複数の画像を1つのPDFへ変換します（画像1枚につき1ページ）。</div>
       <div class="file-box" id="image2pdf-dropzone">
-        <input type="file" id="image2pdf-files" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
+        <input type="file" id="image2pdf-files" aria-label="PDFにする画像" accept="image/*,.heic,.heif,image/heic,image/heif" multiple>
         <div class="drop-hint">ここに画像をドラッグ＆ドロップして追加できます。</div>
         <div class="supported-formats">対応拡張子: JPG / JPEG / PNG / GIF / WebP / HEIC / HEIF</div>
       </div>
@@ -876,26 +885,74 @@
   <section class="card feature-panel" data-feature="compress">
     <div class="field">
       <div class="label big section-title"><svg class="section-icon-svg" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 3v7H3M3 3l7 7M14 21v-7h7M21 21l-7-7"/></svg><span>8. 圧縮 (Compress)</span></div>
-      <div class="helper">PDFの各ページを画像として再レンダリングし、ファイルサイズを圧縮します。<br>※ 圧縮後はテキストの検索・コピーができなくなります。</div>
+      <div class="helper">通常は文字を残したまま、PDFの保存構造を整理します。元の用紙サイズは変更しません。<br>すでに最適化されたPDFは小さくならないことがあります。その場合は元のデータをそのまま保存します。</div>
       <div class="file-box" id="compress-dropzone">
-        <input type="file" id="compress-file" accept="application/pdf">
+        <input type="file" id="compress-file" aria-label="圧縮するPDF" accept="application/pdf" onchange="document.getElementById('compress-result').hidden = true">
         <div class="drop-hint">ここにPDFをドラッグ＆ドロップして追加できます。</div>
       </div>
       <div class="single-preview" id="compress-preview"></div>
     </div>
-    <div class="field">
-      <div class="label" style="font-size:14px;font-weight:700;margin-bottom:10px;">圧縮レベル</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="low"> 低（高画質・小さめ圧縮）</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="medium" checked> 中（バランス）</label>
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="high"> 高（低画質・最大圧縮）</label>
-      </div>
+    <fieldset class="field" style="border:0;padding:0;margin:0 0 16px;">
+      <legend class="label" style="font-size:14px;font-weight:700;margin-bottom:10px;">圧縮方式</legend>
+      <label style="display:block;cursor:pointer;margin-bottom:8px;"><input type="radio" name="compress-mode" value="preserve" checked onchange="syncCompressionMode()"> 文字を保持（推奨）</label>
+      <div class="helper" style="margin-bottom:12px;">文字検索・コピー、画像の解像度を保ち、保存構造のみ最適化します。大幅な圧縮はできません。署名欄があるPDFは署名保護のため元のデータを保存します。</div>
+      <label style="display:block;cursor:pointer;"><input type="radio" name="compress-mode" value="raster" onchange="syncCompressionMode()"> 画像化して圧縮（スキャン・写真向け）</label>
+    </fieldset>
+    <div id="compress-raster-options" hidden>
+      <p class="helper" id="compress-raster-warning" style="color:#a33a20;">注意: 全ページをJPEG画像に変換します。文字検索・コピー、リンク、フォーム、電子署名などは失われ、画質が低下します。元ファイルは残してお使いください。</p>
+      <fieldset class="field" id="compress-level-options" disabled style="border:0;padding:0;margin:0 0 16px;" aria-describedby="compress-raster-warning">
+        <legend class="label" style="font-size:14px;font-weight:700;margin-bottom:10px;">画像化の圧縮レベル</legend>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="low"> 低（高画質）</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="medium" checked> 中（バランス）</label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;"><input type="radio" name="compress-level" value="high"> 高（低画質）</label>
+        </div>
+      </fieldset>
     </div>
+    <div class="helper" id="compress-result" role="status" aria-live="polite" hidden></div>
     <div class="button-row">
       <button class="btn" type="button" onclick="handleCompress()">圧縮して保存</button>
       <button class="btn secondary" type="button" onclick="clearCompress()">クリア</button>
     </div>
     <div class="feature-back-inline"><button class="feature-back-btn" type="button" onclick="showFeatureHome()">← 機能一覧へ戻る</button></div>
+  </section>
+
+
+  <section class="card feature-panel" data-feature="workspace" aria-labelledby="workspace-title">
+    <div class="workspace-heading"><div><h2 id="workspace-title">PDFをまとめて編集</h2><p class="helper">元のPDFは上書きしません。編集後に別ファイルで保存します。</p></div><span id="workspace-count" role="status">0ページ</span></div>
+    <div class="workspace-load" id="workspace-dropzone">
+      <label class="workspace-file-label" for="workspace-files">PDFを選ぶ・追加する</label>
+      <input id="workspace-files" type="file" accept="application/pdf,.pdf" multiple>
+      <label for="workspace-insert">追加位置</label><select id="workspace-insert"><option value="end">末尾</option><option value="after">プレビュー中のページの後</option><option value="start">先頭</option></select>
+      <p class="helper">ここにPDFをドロップできます。複数ファイルは選んだ順で追加します。</p>
+    </div>
+    <div class="workspace-toolbar" aria-label="ページの編集">
+      <button type="button" id="workspace-undo" disabled>元に戻す</button><button type="button" id="workspace-redo" disabled>やり直す</button>
+      <button type="button" id="workspace-rotate-left" disabled>左に90°</button><button type="button" id="workspace-rotate-right" disabled>右に90°</button>
+      <button type="button" id="workspace-delete" disabled>選択ページを削除</button>
+      <button type="button" id="workspace-select-all" disabled>全選択</button><button type="button" id="workspace-deselect" disabled>選択解除</button>
+    </div>
+    <div id="workspace-status" class="workspace-status" role="status" aria-live="polite">PDFを追加して始めてください</div>
+    <div class="workspace-layout">
+      <div><h3 class="workspace-section-title">ページ一覧 <small>チェックで複数選択</small></h3><div id="workspace-pages" class="workspace-pages"></div></div>
+      <div class="workspace-preview-area">
+        <h3 id="workspace-preview-title" class="workspace-section-title">ページを選ぶとここに表示します</h3>
+        <div class="workspace-annotation-controls">
+          <label for="workspace-mark">書き込み</label><select id="workspace-mark"><option value="text">日本語メモ</option><option value="confirmed">確認済</option><option value="review">要確認</option><option value="check">チェック ✓</option></select>
+          <label class="sr-only" for="workspace-note">メモの内容</label><input id="workspace-note" type="text" maxlength="80" placeholder="メモを入力（80文字まで）">
+          <label for="workspace-size">文字サイズ</label><select id="workspace-size"><option value="14">小</option><option value="20" selected>中</option><option value="28">大</option></select>
+          <button type="button" id="workspace-add-note" disabled>書き込みを置く</button><button type="button" id="workspace-remove-note" disabled>最後の書き込みを削除</button>
+          <p class="helper">「書き込みを置く」の後、プレビュー内の位置をクリック。初期位置は右上で、Enterでも配置できます。Escで取消。</p>
+        </div>
+        <div class="workspace-canvas-wrap"><canvas id="workspace-canvas" tabindex="0" aria-label="ページプレビュー。書き込み配置中は矢印キーで位置を調整し、Enterで配置"></canvas><p id="workspace-empty-preview">PDFの内容はこのブラウザ内で処理します</p></div>
+        <p class="workspace-warning">書き込みは画像として重ねます。文字の修正や機密情報の墨消しには使えません。元の文字は残ります。</p>
+      </div>
+    </div>
+    <div class="workspace-save-bar">
+      <label><input id="workspace-page-numbers" type="checkbox"> 保存時にページ番号を付ける</label>
+      <button type="button" class="btn" id="workspace-preview-save" disabled>保存前に確認</button><button type="button" id="workspace-reset" disabled>作業をクリア</button>
+    </div>
+    <p class="helper">元に戻せる操作は直近50回。閉じる・再読み込みで作業は失われます。署名・入力フォーム・しおりなどの文書機能は保持を保証しないため、元ファイルを保管して出力を確認してください。</p>
   </section>
 
   <footer class="mk-mini">
@@ -928,7 +985,7 @@
 
 <script>
   // 年度・rev・最終更新日を自動更新
-  const VERSION = 'r35';
+  const VERSION = 'r36';
   document.getElementById('cpy-year').textContent = new Date().getFullYear();
   const d = new Date(document.lastModified);
   const yyyy = String(d.getFullYear());
@@ -1058,7 +1115,16 @@
     return heicConverterPromise;
   }
 
+  function clearFeatureStatus() {
+    actionStatusEl.textContent = '';
+    actionStatusEl.classList.remove('error', 'busy');
+    sysToastEl.classList.remove('show', 'busy');
+    clearTimeout(showToast._timer);
+  }
+
   function showFeaturePanel(featureName) {
+    clearFeatureStatus();
+    document.body.classList.toggle('editor-open', featureName === 'workspace');
     featureHomeEl.classList.remove('active');
     featurePanels.forEach((panel) => panel.classList.toggle('active', panel.dataset.feature === featureName));
     featureBackEl.classList.add('show');
@@ -1066,6 +1132,8 @@
   }
 
   function showFeatureHome() {
+    clearFeatureStatus();
+    document.body.classList.remove('editor-open');
     featurePanels.forEach((panel) => panel.classList.remove('active'));
     featureHomeEl.classList.add('active');
     featureBackEl.classList.remove('show');
@@ -1196,6 +1264,7 @@
 
   function setInputFileAndTriggerChange(inputId, file) {
     const inputEl = document.getElementById(inputId);
+    if (inputEl?.disabled) return;
     if (!inputEl || !file) return;
     if (Object.prototype.hasOwnProperty.call(singleFileState, inputId)) {
       singleFileState[inputId] = file;
@@ -1472,6 +1541,7 @@
       });
     });
     dropzoneEl.addEventListener('drop', (e) => {
+      if (inputEl.disabled) return;
       const files = Array.from(e.dataTransfer.files).filter(isPdfFile);
       if (!files.length) return;
       singleFileState[inputId] = files[0];
@@ -1735,7 +1805,7 @@
 
       const toggleBtn = document.createElement('button');
       toggleBtn.className = 'mini-btn';
-      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.textContent = item.expanded ? '名前を省略' : 'ファイル名を全文表示';
       toggleBtn.type = 'button';
       toggleBtn.addEventListener('click', () => {
         item.expanded = !item.expanded;
@@ -2038,7 +2108,7 @@
 
       const toggleBtn = document.createElement('button');
       toggleBtn.className = 'mini-btn';
-      toggleBtn.textContent = item.expanded ? '折りたたむ' : '全部表示';
+      toggleBtn.textContent = item.expanded ? '名前を省略' : 'ファイル名を全文表示';
       toggleBtn.type = 'button';
       toggleBtn.addEventListener('click', () => {
         item.expanded = !item.expanded;
@@ -2348,13 +2418,24 @@
     showClearedToast();
   }
 
+  let compressionInProgress = false;
+
+  function syncCompressionMode() {
+    const isRaster = document.querySelector('input[name="compress-mode"]:checked')?.value === 'raster';
+    document.getElementById('compress-raster-options').hidden = !isRaster;
+    document.getElementById('compress-level-options').disabled = !isRaster || compressionInProgress;
+  }
+
   function clearCompress() {
+    if (compressionInProgress) return;
     resetSingleFeature({
       inputIds: ['compress-file'],
       previewIds: ['compress-preview'],
     });
-    const defaultLevelEl = document.querySelector('input[name="compress-level"][value="medium"]');
-    if (defaultLevelEl) defaultLevelEl.checked = true;
+    document.querySelector('input[name="compress-mode"][value="preserve"]').checked = true;
+    document.querySelector('input[name="compress-level"][value="medium"]').checked = true;
+    document.getElementById('compress-result').hidden = true;
+    syncCompressionMode();
     showClearedToast();
   }
 
@@ -2378,30 +2459,96 @@
     return attempts[level] || attempts.medium;
   }
 
+  // Re-save the original document rather than copying pages or rasterizing them.
+  // Existing text, images, page boxes, forms and catalog entries stay in place.
+  async function optimizePdfPreservingText(sourceBytes) {
+    const originalBytes = new Uint8Array(sourceBytes);
+    const pdf = await PDFDocument.load(originalBytes, {
+      updateMetadata: false,
+      throwOnInvalidObject: true,
+    });
+    const { PDFArray, PDFDict, PDFName } = globalThis.PDFLib;
+    const pendingObjects = pdf.context.enumerateIndirectObjects().map(([, object]) => object);
+    const seenObjects = new Set();
+    while (pendingObjects.length) {
+      const object = pendingObjects.pop();
+      if (!object || seenObjects.has(object)) continue;
+      seenObjects.add(object);
+      if (object instanceof PDFDict) {
+        if (object.has(PDFName.of('ByteRange')) ||
+            object.get(PDFName.of('Type'))?.toString() === '/Sig' ||
+            object.get(PDFName.of('FT'))?.toString() === '/Sig') {
+          // Rewriting invalidates signatures. Inspect direct dictionaries and arrays too.
+          return { pdfBytes: originalBytes, optimized: false, reason: 'signature' };
+        }
+        pendingObjects.push(...object.entries().map(([, value]) => value));
+      } else if (object instanceof PDFArray) {
+        pendingObjects.push(...object.asArray());
+      }
+    }
+    const candidate = await pdf.save({
+      useObjectStreams: true,
+      addDefaultPage: false,
+      updateFieldAppearances: false,
+    });
+    if (candidate.length >= originalBytes.length) {
+      return { pdfBytes: originalBytes, optimized: false, reason: 'not-smaller' };
+    }
+    return { pdfBytes: candidate, optimized: true, reason: 'optimized' };
+  }
+
   async function buildCompressedPdf(srcPdf, settings) {
     const outPdf = await PDFDocument.create();
 
     for (let pageNum = 1; pageNum <= srcPdf.numPages; pageNum++) {
       const page = await srcPdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: settings.scale });
       const canvas = document.createElement('canvas');
-      canvas.width = Math.max(1, Math.round(viewport.width));
-      canvas.height = Math.max(1, Math.round(viewport.height));
-      await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      try {
+        // PDF.js 4.5.136 applies CropBox and Rotate in its viewport, but not UserUnit.
+        // A unit viewport describes physical PDF points; render scale changes pixels only.
+        const userUnit = Number.isFinite(page.userUnit) && page.userUnit > 0 ? page.userUnit : 1;
+        const physicalViewport = page.getViewport({ scale: userUnit });
+        const { width, height } = physicalViewport;
+        if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
+          throw new Error('ページサイズが正しくありません。');
+        }
+        // Bound canvas memory, including unusually large pages and large UserUnit values.
+        const renderScale = Math.min(settings.scale, 8192 / width, 8192 / height,
+          Math.sqrt(16_000_000 / (width * height)));
+        const viewport = page.getViewport({ scale: userUnit * renderScale });
+        canvas.width = Math.max(1, Math.ceil(viewport.width));
+        canvas.height = Math.max(1, Math.ceil(viewport.height));
+        const context = canvas.getContext('2d');
+        if (!context) throw new Error('画像を描画できませんでした。');
+        await page.render({
+          canvasContext: context,
+          viewport,
+          background: 'rgb(255,255,255)',
+          transform: [canvas.width / viewport.width, 0, 0, canvas.height / viewport.height, 0, 0],
+        }).promise;
 
-      const blob = await new Promise((resolve, reject) => {
-        canvas.toBlob((b) => {
-          if (!b) reject(new Error('画像変換に失敗しました。'));
-          else resolve(b);
-        }, 'image/jpeg', settings.quality);
-      });
-      const jpgImage = await outPdf.embedJpg(new Uint8Array(await blob.arrayBuffer()));
-      const { width, height } = jpgImage.scale(1);
-      const outPage = outPdf.addPage([width, height]);
-      outPage.drawImage(jpgImage, { x: 0, y: 0, width, height });
-      canvas.width = 1;
-      canvas.height = 1;
-      if (page.cleanup) page.cleanup();
+        const blob = await new Promise((resolve, reject) => {
+          canvas.toBlob((b) => {
+            if (!b) reject(new Error('画像変換に失敗しました。'));
+            else resolve(b);
+          }, 'image/jpeg', settings.quality);
+        });
+        const jpgImage = await outPdf.embedJpg(new Uint8Array(await blob.arrayBuffer()));
+        // Preserve visible physical size, even beyond the usual 14,400-point limit.
+        // Rotation and cropping are already baked into the rendered image.
+        const outputUnit = Math.max(1, Math.ceil(Math.max(width, height) / 14_400));
+        const pageWidth = width / outputUnit;
+        const pageHeight = height / outputUnit;
+        const outPage = outPdf.addPage([pageWidth, pageHeight]);
+        if (outputUnit > 1) {
+          outPage.node.set(globalThis.PDFLib.PDFName.of('UserUnit'), globalThis.PDFLib.PDFNumber.of(outputUnit));
+        }
+        outPage.drawImage(jpgImage, { x: 0, y: 0, width: pageWidth, height: pageHeight });
+      } finally {
+        canvas.width = 1;
+        canvas.height = 1;
+        if (page.cleanup) page.cleanup();
+      }
     }
 
     return outPdf.save();
@@ -2613,44 +2760,68 @@
 
   // --- 8. 圧縮 ---
   async function handleCompress() {
+    if (compressionInProgress) return;
     const file = getSelectedSingleFile('compress-file');
     if (!file) return showToast('ファイルを選択してください。', true);
 
-    const levelEl = document.querySelector('input[name="compress-level"]:checked');
-    const level = levelEl ? levelEl.value : 'medium';
-    const attempts = getCompressionAttempts(level);
-
-    showProcessingStatus('PDFを圧縮しています');
+    const mode = document.querySelector('input[name="compress-mode"]:checked')?.value || 'preserve';
+    const level = document.querySelector('input[name="compress-level"]:checked')?.value || 'medium';
+    compressionInProgress = true;
+    const controls = Array.from(document.querySelectorAll('[data-feature="compress"] input, [data-feature="compress"] button'));
+    const previousDisabled = controls.map((control) => control.disabled);
+    controls.forEach((control) => { control.disabled = true; });
+    const resultEl = document.getElementById('compress-result');
+    resultEl.hidden = true;
+    showProcessingStatus(mode === 'preserve' ? '文字を保持してPDFを最適化しています' : 'PDFを画像化して圧縮しています');
     let srcPdf = null;
     try {
-      const pdfjsLib = await getPdfJsLib();
-      const arrayBuffer = await readFileAsArrayBuffer(file);
-      srcPdf = await createPdfJsLoadingTask(pdfjsLib, arrayBuffer).promise;
-      let bestResult = null;
-
-      for (let i = 0; i < attempts.length; i++) {
-        const settings = attempts[i];
-        if (i > 0) {
-          showProcessingStatus('圧縮後の容量が大きいため、より強い設定で再試行しています');
-        }
-        const pdfBytes = await buildCompressedPdf(srcPdf, settings);
-        if (!bestResult || pdfBytes.length < bestResult.pdfBytes.length) {
-          bestResult = { pdfBytes, settings };
-        }
-        if (pdfBytes.length < file.size) {
-          const basename = file.name.replace(/\.pdf$/i, '');
-          const didSave = downloadPDF(pdfBytes, `${basename}_compressed.pdf`);
-          if (didSave) showToast(`圧縮しました: ${formatFileSize(file.size)} → ${formatFileSize(pdfBytes.length)}`);
-          return;
+      const originalBytes = new Uint8Array(await readFileAsArrayBuffer(file));
+      let result;
+      if (mode === 'preserve') {
+        result = await optimizePdfPreservingText(originalBytes);
+      } else {
+        const pdfjsLib = await getPdfJsLib();
+        // PDF.js transfers its input to a worker. Keep original bytes for exact fallback.
+        srcPdf = await createPdfJsLoadingTask(pdfjsLib, originalBytes.slice()).promise;
+        result = { pdfBytes: originalBytes, optimized: false, reason: 'not-smaller' };
+        const attempts = getCompressionAttempts(level);
+        for (let i = 0; i < attempts.length; i++) {
+          if (i > 0) showProcessingStatus('容量が減らないため、画像化の設定を調整しています');
+          const pdfBytes = await buildCompressedPdf(srcPdf, attempts[i]);
+          if (pdfBytes.length < originalBytes.length) {
+            result = { pdfBytes, optimized: true, reason: 'optimized' };
+            break;
+          }
         }
       }
 
-      const bestSize = bestResult ? formatFileSize(bestResult.pdfBytes.length) : '不明';
-      showToast(`圧縮後の方が大きくなるため保存しませんでした（元: ${formatFileSize(file.size)} / 最小候補: ${bestSize}）。`, true);
+      const basename = file.name.replace(/\.pdf$/i, '');
+      const suffix = result.optimized ? '_compressed' : '_original';
+      const didSave = downloadPDF(result.pdfBytes, `${basename}${suffix}.pdf`);
+      if (didSave) {
+        const savedPercent = ((1 - result.pdfBytes.length / originalBytes.length) * 100).toFixed(1);
+        let message;
+        if (result.reason === 'signature') {
+          message = `署名を保護するため、元のデータをそのまま保存しました（${formatFileSize(originalBytes.length)}）。`;
+        } else if (!result.optimized) {
+          message = `容量が減らなかったため、元のデータをそのまま保存しました（${formatFileSize(originalBytes.length)}）。`;
+        } else {
+          message = `${mode === 'preserve' ? '文字を保持して最適化' : '画像化して圧縮'}しました: ${formatFileSize(originalBytes.length)} → ${formatFileSize(result.pdfBytes.length)}（${savedPercent}%削減）。用紙サイズは変更していません。`;
+        }
+        resultEl.textContent = message;
+        resultEl.hidden = false;
+        showToast(message);
+      }
     } catch (e) {
-      showToast('エラー: ファイルが保護されていないか確認してください。', true);
+      showToast('エラー: PDFを処理できませんでした。ファイルの破損・パスワード保護を確認してください。', true);
     } finally {
-      if (srcPdf?.destroy) srcPdf.destroy();
+      try {
+        if (srcPdf?.destroy) await srcPdf.destroy();
+      } finally {
+        compressionInProgress = false;
+        controls.forEach((control, index) => { control.disabled = previousDisabled[index]; });
+        syncCompressionMode();
+      }
     }
   }
 
@@ -2750,5 +2921,15 @@
     }
   }
 </script>
+<dialog id="workspace-save-dialog" aria-labelledby="workspace-save-title">
+  <h2 id="workspace-save-title">保存内容を確認</h2><p id="workspace-save-summary"></p>
+  <canvas id="workspace-output-canvas" aria-label="保存されるPDFのプレビュー"></canvas>
+  <div class="workspace-toolbar"><button type="button" id="workspace-output-prev">前のページ</button><span id="workspace-output-position" role="status"></span><button type="button" id="workspace-output-next">次のページ</button></div>
+  <p class="helper">プレビューのページ順で保存します。必要ならキャンセルして各ページを確認してください。</p>
+  <label for="workspace-filename">ファイル名</label><input id="workspace-filename" type="text" value="edited.pdf" maxlength="180">
+  <p class="helper">元ファイルとは別に保存されます。署名やフォームなどは出力後も確認してください。</p>
+  <div class="workspace-toolbar"><button type="button" id="workspace-save-cancel">編集に戻る</button><button type="button" class="btn" id="workspace-save-confirm">この内容で保存</button></div>
+</dialog>
+<script src="./editor.js"></script>
 </body>
 </html>

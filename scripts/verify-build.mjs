@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { access, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Script } from 'node:vm';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const html = await readFile(resolve(rootDir, 'index.html'), 'utf8');
@@ -29,4 +30,12 @@ for (const fileEntry of manifestFiles) {
   }
 }
 
+for (const asset of ['editor.js', 'editor.css']) {
+  await access(resolve(rootDir, asset));
+  if (!html.includes(`./${asset}`)) throw new Error(`Missing asset reference: ${asset}`);
+}
+new Script(await readFile(resolve(rootDir, 'editor.js'), 'utf8'), { filename: 'editor.js' });
+for (const [index, match] of [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].entries()) {
+  new Script(match[1], { filename: `inline-${index}.js` });
+}
 console.log('Static build verification passed.');

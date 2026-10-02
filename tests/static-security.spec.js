@@ -18,8 +18,9 @@ test('PDFライブラリは固定版を自己ホストし、CDNへフォール�
   const packageJson = JSON.parse(await readFile(resolve(rootDir, 'package.json'), 'utf8'));
 
   for (const host of forbiddenCdns) expect(html).not.toContain(host);
+  const editor = await readFile(resolve(rootDir, 'editor.js'), 'utf8');
   for (const uploadPrimitive of ['fetch(', 'XMLHttpRequest', 'sendBeacon', 'WebSocket']) {
-    expect(html).not.toContain(uploadPrimitive);
+    expect(html + editor).not.toContain(uploadPrimitive);
   }
   for (const file of vendorFiles) {
     await expect(access(resolve(rootDir, file))).resolves.toBeUndefined();
@@ -149,4 +150,7 @@ test('PDF.jsの全読み込みはisEvalSupported:falseの共通ヘルパーを�
   expect(html).toContain('isEvalSupported: false');
   expect(html.match(/pdfjsLib\.getDocument\s*\(/g) || []).toHaveLength(1);
   expect(html.match(/createPdfJsLoadingTask\s*\(/g) || []).toHaveLength(5);
+  const editor = await readFile(resolve(rootDir, 'editor.js'), 'utf8');
+  expect(editor).not.toMatch(/\.getDocument\s*\(/);
+  expect(editor.match(/createPdfJsLoadingTask\s*\(/g) || []).toHaveLength(2);
 });

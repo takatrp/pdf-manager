@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { expect, test } from '@playwright/test';
 import {
   clickAndReadPdfDownload,
@@ -109,6 +110,7 @@ test('PDF圧縮で小さくなった出力を保存する', async ({ page }) => 
   const panel = await openFeature(page, 'compress');
   await page.locator('#compress-file').setInputFiles(fixture('compression-source.pdf'));
   await expect(page.locator('#compress-preview canvas')).toHaveCount(1);
+  await page.locator('input[name="compress-mode"][value="raster"]').check();
   await page.locator('input[name="compress-level"][value="high"]').check();
   const result = await clickAndReadPdfDownload(page, panel.getByRole('button', { name: '圧縮して保存' }));
   expect(result.pdf.getPageCount()).toBe(2);
@@ -116,11 +118,10 @@ test('PDF圧縮で小さくなった出力を保存する', async ({ page }) => 
   expect(result.bytes.length).toBeLessThan((await source.save()).length);
 });
 
-test('圧縮後が大きい場合は保存せず、理由を表示する', async ({ page }) => {
+test('圧縮で容量が減らない場合は元のデータをそのまま保存する', async ({ page }) => {
   const panel = await openFeature(page, 'compress');
   await page.locator('#compress-file').setInputFiles(fixture('simple-2pages.pdf'));
-  await panel.getByRole('button', { name: '圧縮して保存' }).click();
-  await expect(page.locator('#action-status')).toContainText('圧縮後の方が大きくなるため保存しませんでした', {
-    timeout: 60_000,
-  });
+  const result = await clickAndReadPdfDownload(page, panel.getByRole('button', { name: '圧縮して保存' }));
+  await expect(page.locator('#action-status')).toContainText('元のデータをそのまま保存しました');
+  expect(result.bytes).toEqual(await readFile(fixture('simple-2pages.pdf')));
 });
